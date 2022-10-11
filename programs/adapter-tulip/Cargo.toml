@@ -1,0 +1,31 @@
+[package]
+name = "adapter-tulip"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "adapter_tulip"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+
+[dependencies]
+anchor-lang = "0.24.2"
+anchor-spl = "0.24.2"
+spl-associated-token-account = "1.0.3"
+hex = "0.4.3"
+tulip-arrform = "0.1.2"
+tulip-derivative = "2.2.1"
+static-pubkey = "1.0.2"
+arrayref="0.3.6"
+uint = "0.8.5"
+num-derive = "0.3"
+num-traits = "0.2"
+thiserror = "1.0"
+type-layout = "0.2.0"
+itertools = "0.10.3"
