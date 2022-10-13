@@ -8,7 +8,7 @@ use anchor_lang::solana_program::{
 use anchor_spl::token::TokenAccount;
 
 pub mod price;
-use crate::price::{PoolDirectionP, get_raydium_lp_price};
+use crate::price::{get_raydium_lp_price, PoolDirectionP};
 
 declare_id!("ADPT1q4xG8F9m64cQyjqGe11cCXQq6vL4beY5hJavhQ5");
 
@@ -16,9 +16,7 @@ declare_id!("ADPT1q4xG8F9m64cQyjqGe11cCXQq6vL4beY5hJavhQ5");
 pub mod adapter_raydium {
     use super::*;
 
-    pub fn swap(
-        ctx: Context<Action>,
-    ) -> Result<()> {
+    pub fn swap(ctx: Context<Action>) -> Result<()> {
         let swap_ix: u8 = 9;
 
         // Use remaining accounts
@@ -66,10 +64,7 @@ pub mod adapter_raydium {
             data: swap_data,
         };
 
-        invoke(
-            &ix,
-            ctx.remaining_accounts,
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
 
         dest_token_account.reload()?;
 
@@ -79,9 +74,7 @@ pub mod adapter_raydium {
         msg!("out_amount: {}", out_amount.to_string());
 
         // Return Result
-        let swap_result = SwapResultWrapper {
-            out_amount
-        };
+        let swap_result = SwapResultWrapper { out_amount };
         let mut buffer: Vec<u8> = Vec::new();
         swap_result.serialize(&mut buffer).unwrap();
 
@@ -110,7 +103,7 @@ pub mod adapter_raydium {
             0 => PoolDirectionP::Obverse,
             // Reverse
             1 => PoolDirectionP::Reverse,
-            _ => return Err(ErrorCode::UnsupportedPoolDirection.into())
+            _ => return Err(ErrorCode::UnsupportedPoolDirection.into()),
         };
 
         // Get the data from payload queue
@@ -124,32 +117,25 @@ pub mod adapter_raydium {
             ctx.remaining_accounts[7].clone(),
             ctx.remaining_accounts[5].clone(),
             token_in_amount,
-            price_pool_direction
+            price_pool_direction,
         );
 
-        let (
-            add_lp_coin_amount,
-            add_lp_pc_amount,
-            add_lp_fixed_coin,
-        ) = match gateway_state.pool_direction {
-            // Obverse
-            0 => {
-                (
+        let (add_lp_coin_amount, add_lp_pc_amount, add_lp_fixed_coin) =
+            match gateway_state.pool_direction {
+                // Obverse
+                0 => (
                     (token_in_amount as f64 * raydium_lp_price_wrapper.coin_to_pc_price) as u64,
                     token_in_amount,
                     0 as u64,
-                )
-            },
-            // Reverse
-            1 => {
-                (
+                ),
+                // Reverse
+                1 => (
                     token_in_amount,
                     (token_in_amount as f64 * raydium_lp_price_wrapper.pc_to_coin_price) as u64,
                     1 as u64,
-                )
-            },
-            _ => return Err(ErrorCode::UnsupportedPoolDirection.into())
-        };
+                ),
+                _ => return Err(ErrorCode::UnsupportedPoolDirection.into()),
+            };
 
         let add_lp_accounts = vec![
             AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
@@ -180,10 +166,7 @@ pub mod adapter_raydium {
             data: add_lp_data,
         };
 
-        invoke(
-            &ix,
-            ctx.remaining_accounts,
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
 
         lp_token_account.reload()?;
         let lp_token_amount_after = lp_token_account.amount;
@@ -192,9 +175,7 @@ pub mod adapter_raydium {
         msg!("lp_amount: {}", lp_amount.to_string());
 
         // Return Result
-        let result = AddLiquidityResultWrapper {
-            lp_amount
-        };
+        let result = AddLiquidityResultWrapper { lp_amount };
         let mut buffer: Vec<u8> = Vec::new();
         result.serialize(&mut buffer).unwrap();
 
@@ -260,10 +241,7 @@ pub mod adapter_raydium {
             data: remove_lp_data,
         };
 
-        invoke(
-            &ix,
-            ctx.remaining_accounts,
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
 
         let swap_in_amount = match gateway_state.pool_direction {
             // Obverse
@@ -271,20 +249,18 @@ pub mod adapter_raydium {
                 coin_token_account.reload()?;
                 let coin_token_amount_after = coin_token_account.amount;
                 coin_token_amount_after - coin_token_amount_before
-            },
+            }
             // Reverse
             1 => {
                 pc_token_account.reload()?;
                 let pc_token_amount_after = pc_token_account.amount;
                 pc_token_amount_after - pc_token_amount_before
-            },
-            _ => return Err(ErrorCode::UnsupportedPoolDirection.into())
+            }
+            _ => return Err(ErrorCode::UnsupportedPoolDirection.into()),
         };
 
         // Return Result
-        let result = RemoveLiquidityResultWrapper {
-            swap_in_amount,
-        };
+        let result = RemoveLiquidityResultWrapper { swap_in_amount };
         let mut buffer: Vec<u8> = Vec::new();
         result.serialize(&mut buffer).unwrap();
 
@@ -293,9 +269,7 @@ pub mod adapter_raydium {
         Ok(())
     }
 
-    pub fn stake<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
-    ) -> Result<()> {
+    pub fn stake<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Action<'info>>) -> Result<()> {
         let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
 
         let current_index = gateway_state.current_index;
@@ -315,9 +289,7 @@ pub mod adapter_raydium {
         invoke_stake(&ctx, stake_ix, lp_amount)?;
 
         // Return Result
-        let result = StakeResultWrapper {
-            lp_amount,
-        };
+        let result = StakeResultWrapper { lp_amount };
         let mut buffer: Vec<u8> = Vec::new();
         result.serialize(&mut buffer).unwrap();
 
@@ -348,9 +320,7 @@ pub mod adapter_raydium {
         invoke_stake(&ctx, unstake_ix, share_amount)?;
 
         // Return Result
-        let result = UnstakeResultWrapper {
-            share_amount,
-        };
+        let result = UnstakeResultWrapper { share_amount };
         let mut buffer: Vec<u8> = Vec::new();
         result.serialize(&mut buffer).unwrap();
 
@@ -359,9 +329,7 @@ pub mod adapter_raydium {
         Ok(())
     }
 
-    pub fn harvest(
-        ctx: Context<Action>,
-    ) -> Result<()> {
+    pub fn harvest(ctx: Context<Action>) -> Result<()> {
         let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
 
         let current_index = gateway_state.current_index;
@@ -384,11 +352,7 @@ fn get_gateway_state(gateway_state_info: &AccountInfo) -> GatewayStateWrapper {
     GatewayStateWrapper::deserialize(&mut gateway_state_data).unwrap()
 }
 
-pub fn invoke_stake(
-    ctx: &Context<Action>,
-    ix: u8,
-    amount: u64
-) -> Result<()> {
+pub fn invoke_stake(ctx: &Context<Action>, ix: u8, amount: u64) -> Result<()> {
     let mut stake_accounts = vec![
         AccountMeta::new(ctx.remaining_accounts[0].key(), false),
         AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
@@ -418,10 +382,7 @@ pub fn invoke_stake(
         data: stake_data,
     };
 
-    invoke(
-        &stake_ix,
-        ctx.remaining_accounts,
-    )?;
+    invoke(&stake_ix, ctx.remaining_accounts)?;
 
     Ok(())
 }
@@ -499,5 +460,5 @@ pub enum ErrorCode {
     #[msg("Unsupported PoolDirection")]
     UnsupportedPoolDirection,
     #[msg("Unsupported Action Version")]
-    UnsupportedVersion
+    UnsupportedVersion,
 }
