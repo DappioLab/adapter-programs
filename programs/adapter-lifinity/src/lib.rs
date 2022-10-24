@@ -148,7 +148,7 @@ pub mod adapter_lifinity {
         msg!("pc_amount: {}", add_lp_pc_amount.to_string());
 
         let add_lp_accounts = vec![
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
+            AccountMeta::new(ctx.remaining_accounts[0].key(), false),
             AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
             AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), true),
             AccountMeta::new(ctx.remaining_accounts[3].key(), false),
@@ -229,7 +229,7 @@ pub mod adapter_lifinity {
         );
 
         let remove_lp_accounts = vec![
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
+            AccountMeta::new(ctx.remaining_accounts[0].key(), false),
             AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
             AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), true),
             AccountMeta::new(ctx.remaining_accounts[3].key(), false),
