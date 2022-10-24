@@ -15,35 +15,26 @@ pub mod adapter_saber {
 
     pub fn add_liquidity<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        let add_lp_ix: u8 = 2;
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = AddLiquidityInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
 
         // Use remaining accounts
         let lp_token_account_info = ctx.remaining_accounts[8].clone();
         let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
         let lp_token_amount_before = lp_token_account.amount;
 
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
-        let current_index =gateway_state.current_index;
-
-        // Get the data from payload queue
-        let (pool_token_a_in_amount, pool_token_b_in_amount) = match gateway_state.pool_direction {
+        // Get the data from input_struct
+        let (pool_token_a_in_amount, pool_token_b_in_amount) = match input_struct.pool_direction {
             // Obverse
-            0 =>{
-                (
-                    0,
-                    gateway_state.payload_queue[current_index as usize]
-                )
-            },
+            0 => (0, input_struct.token_in_amount),
             // Reverse
-            1 => {
-                (
-                    gateway_state.payload_queue[current_index as usize],
-                    0
-                )
-            },
-            _ => return Err(ErrorCode::UnsupportedPoolDirection.into())
+            1 => (input_struct.token_in_amount, 0),
+            _ => return Err(ErrorCode::UnsupportedPoolDirection.into()),
         };
 
         let add_lp_accounts = vec![
@@ -60,9 +51,10 @@ pub mod adapter_saber {
             AccountMeta::new_readonly(ctx.remaining_accounts[10].key(), false),
         ];
 
+        const ADD_LP_IX: u8 = 2;
         let minimal_receive: u64 = 0;
         let mut add_lp_data = vec![];
-        add_lp_data.append(&mut add_lp_ix.try_to_vec()?);
+        add_lp_data.append(&mut ADD_LP_IX.try_to_vec()?);
         add_lp_data.append(&mut pool_token_a_in_amount.try_to_vec()?);
         add_lp_data.append(&mut pool_token_b_in_amount.try_to_vec()?);
         add_lp_data.append(&mut minimal_receive.try_to_vec()?);
@@ -73,48 +65,44 @@ pub mod adapter_saber {
             data: add_lp_data,
         };
 
-        invoke(
-            &ix,
-            ctx.remaining_accounts
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
         lp_token_account.reload()?;
 
         let lp_token_amount_after = lp_token_account.amount;
         let lp_amount = lp_token_amount_after - lp_token_amount_before;
 
-        msg!("lp_amount: {}", lp_amount.to_string());
-
-        // Return Result
-        let result = AddLiquidityResultWrapper {
-            lp_amount
+        // Wrap Output
+        let output_struct = AddLiquidityOutputWrapper {
+            lp_amount,
+            dummy_2: 1000,
+            ..Default::default()
         };
-        let mut buffer: Vec<u8> = Vec::new();
-        result.serialize(&mut buffer).unwrap();
 
-        anchor_lang::solana_program::program::set_return_data(&buffer);
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
 
     pub fn remove_liquidity<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
-        let current_index = gateway_state.current_index;
-        let action = gateway_state.action_queue[current_index as usize];
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = RemoveLiquidityInputWrapper::deserialize(&mut input_bytes)?;
 
-        // Get the data from payload queue
-        let lp_amount = gateway_state.payload_queue[current_index as usize];
+        msg!("Input: {:?}", input_struct);
 
-        msg!("lp_amount: {}", lp_amount.to_string());
-        msg!("action: {}", action.to_string());
-
-        let ix = match action {
+        let ix = match input_struct.action {
             // RemoveLiquidity
             2 => {
-                msg!("In RemoveLiquidity");
-                let remove_lp_ix: u8 = 3;
+                const REMOVE_LP_IX: u8 = 3;
+
                 let remove_lp_accounts = vec![
                     AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
                     AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
@@ -133,8 +121,8 @@ pub mod adapter_saber {
                 let minimal_receive: u64 = 0;
 
                 let mut remove_lp_data = vec![];
-                remove_lp_data.append(&mut remove_lp_ix.try_to_vec()?);
-                remove_lp_data.append(&mut lp_amount.try_to_vec()?);
+                remove_lp_data.append(&mut REMOVE_LP_IX.try_to_vec()?);
+                remove_lp_data.append(&mut input_struct.lp_amount.try_to_vec()?);
                 remove_lp_data.append(&mut minimal_receive.try_to_vec()?);
                 remove_lp_data.append(&mut minimal_receive.try_to_vec()?);
 
@@ -143,11 +131,11 @@ pub mod adapter_saber {
                     accounts: remove_lp_accounts,
                     data: remove_lp_data,
                 }
-            },
+            }
             // RemoveLiquiditySingle
             3 => {
-                msg!("In RemoveLiquiditySingle");
-                let remove_lp_ix: u8 = 4;
+                const REMOVE_LP_IX: u8 = 4;
+
                 let remove_lp_accounts = vec![
                     AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
                     AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
@@ -164,8 +152,8 @@ pub mod adapter_saber {
                 let minimal_receive: u64 = 0;
 
                 let mut remove_lp_data = vec![];
-                remove_lp_data.append(&mut remove_lp_ix.try_to_vec()?);
-                remove_lp_data.append(&mut lp_amount.try_to_vec()?);
+                remove_lp_data.append(&mut REMOVE_LP_IX.try_to_vec()?);
+                remove_lp_data.append(&mut input_struct.lp_amount.try_to_vec()?);
                 remove_lp_data.append(&mut minimal_receive.try_to_vec()?);
 
                 Instruction {
@@ -173,30 +161,40 @@ pub mod adapter_saber {
                     accounts: remove_lp_accounts,
                     data: remove_lp_data,
                 }
-            },
+            }
             _ => {
                 return Err(ErrorCode::UnsupportedAction.into());
             }
         };
 
-        invoke(
-            &ix,
-            ctx.remaining_accounts
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
+
+        // Wrap Output
+        let output_struct = RemoveLiquidityOutputWrapper {
+            dummy_1: 500,
+            dummy_2: 1000,
+            ..Default::default()
+        };
+
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
 
     pub fn stake<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = StakeInputWrapper::deserialize(&mut input_bytes)?;
 
-        let current_index = gateway_state.current_index;
-
-        // Get the data from payload queue
-        let lp_amount = gateway_state.payload_queue[current_index as usize];
+        msg!("Input: {:?}", input_struct);
 
         let sighash_arr = sighash("global", "stake_tokens");
 
@@ -212,7 +210,7 @@ pub mod adapter_saber {
 
         let mut stake_data = vec![];
         stake_data.append(&mut sighash_arr.try_to_vec()?);
-        stake_data.append(&mut lp_amount.try_to_vec()?);
+        stake_data.append(&mut input_struct.lp_amount.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -220,28 +218,35 @@ pub mod adapter_saber {
             data: stake_data,
         };
 
-        invoke(
-            &ix,
-            ctx.remaining_accounts,
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
+
+        // Wrap Output
+        let output_struct = StakeOutputWrapper {
+            dummy_1: 1000,
+            dummy_2: 2000,
+            ..Default::default()
+        };
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
 
     pub fn unstake<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = UnstakeInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
+
         let sighash_arr = sighash("global", "withdraw_tokens");
-
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
-
-        let current_index = gateway_state.current_index;
-
-        // Get the data from payload queue
-        let lp_amount = gateway_state.payload_queue[current_index as usize];
-
-        msg!("lp_amount: {}", lp_amount.to_string());
 
         let unstake_accounts = vec![
             AccountMeta::new(ctx.remaining_accounts[0].key(), true),
@@ -255,7 +260,7 @@ pub mod adapter_saber {
 
         let mut unstake_data = vec![];
         unstake_data.append(&mut sighash_arr.try_to_vec()?);
-        unstake_data.append(&mut lp_amount.try_to_vec()?);
+        unstake_data.append(&mut input_struct.lp_amount.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -263,26 +268,34 @@ pub mod adapter_saber {
             data: unstake_data,
         };
 
-        invoke(
-            &ix,
-            ctx.remaining_accounts,
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
 
-        let result = UnstakeResultWrapper {
-            lp_amount,
+        // Wrap Output
+        let output_struct = UnstakeOutputWrapper {
+            lp_amount: input_struct.lp_amount,
+            dummy_2: 2000,
+            ..Default::default()
         };
-        let mut buffer: Vec<u8> = Vec::new();
-        result.serialize(&mut buffer).unwrap();
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
 
-        anchor_lang::solana_program::program::set_return_data(&buffer);
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
 
     pub fn harvest<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        // Harvest
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = HarvestInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
+
         let sighash_arr = sighash("global", "claim_rewards");
 
         let harvest_accounts = vec![
@@ -310,10 +323,18 @@ pub mod adapter_saber {
             data: harvest_data,
         };
 
-        invoke(
-            &ix,
-            ctx.remaining_accounts,
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
+
+        // Wrap Output
+        let output_struct = HarvestOutputWrapper {
+            ..Default::default()
+        };
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
@@ -329,44 +350,144 @@ pub enum PoolDirection {
 pub struct Action<'info> {
     pub gateway_authority: Signer<'info>,
     /// CHECK: Safe
-    pub gateway_state_info: AccountInfo<'info>,
-    /// CHECK: Safe
     pub base_program_id: AccountInfo<'info>,
 }
 
-fn get_gateway_state(gateway_state_info: &AccountInfo) -> GatewayStateWrapper {
-    let mut gateway_state_data = &**gateway_state_info.try_borrow_data().unwrap();
-    GatewayStateWrapper::deserialize(&mut gateway_state_data).unwrap()
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub struct AddLiquidityResultWrapper {
-    pub lp_amount: u64,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub struct UnstakeResultWrapper {
-    pub lp_amount: u64,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub struct GatewayStateWrapper {
-    pub discriminator: u64,
-    pub user_key: Pubkey,
-    pub random_seed: u64,
-    pub version: u8,
-    pub current_index: u8, // Start from 0
-    pub queue_size: u8,
-
-    // Queues
-    pub protocol_queue: [u8; 8],
-    pub action_queue: [u8; 8],
-    pub version_queue: [u8; 8],
-    pub payload_queue: [u64; 8],
-
-    // Extra metadata
-    pub swap_min_out_amount: u64,
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct AddLiquidityInputWrapper {
+    pub token_in_amount: u64,
     pub pool_direction: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct RemoveLiquidityInputWrapper {
+    pub lp_amount: u64,
+    pub action: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct StakeInputWrapper {
+    pub lp_amount: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct UnstakeInputWrapper {
+    pub lp_amount: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct HarvestInputWrapper {}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct AddLiquidityOutputWrapper {
+    pub lp_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct RemoveLiquidityOutputWrapper {
+    pub dummy_1: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct StakeOutputWrapper {
+    pub dummy_1: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct UnstakeOutputWrapper {
+    pub lp_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct HarvestOutputWrapper {
+    pub dummy_1: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// Make a tuple for being accessed by index rather than field name
+pub type AddLiquidityOutputTuple = (u64, u64, u64, u64);
+pub type RemoveLiquidityOutputTuple = (u64, u64, u64, u64);
+pub type StakeOutputTuple = (u64, u64, u64, u64);
+pub type UnstakeOutputTuple = (u64, u64, u64, u64);
+pub type HarvestOutputTuple = (u64, u64, u64, u64);
+
+impl From<AddLiquidityOutputWrapper> for AddLiquidityOutputTuple {
+    fn from(result: AddLiquidityOutputWrapper) -> AddLiquidityOutputTuple {
+        let AddLiquidityOutputWrapper {
+            lp_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (lp_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<RemoveLiquidityOutputWrapper> for RemoveLiquidityOutputTuple {
+    fn from(result: RemoveLiquidityOutputWrapper) -> RemoveLiquidityOutputTuple {
+        let RemoveLiquidityOutputWrapper {
+            dummy_1,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (dummy_1, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<StakeOutputWrapper> for StakeOutputTuple {
+    fn from(result: StakeOutputWrapper) -> StakeOutputTuple {
+        let StakeOutputWrapper {
+            dummy_1,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (dummy_1, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<UnstakeOutputWrapper> for UnstakeOutputTuple {
+    fn from(result: UnstakeOutputWrapper) -> UnstakeOutputTuple {
+        let UnstakeOutputWrapper {
+            lp_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (lp_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<HarvestOutputWrapper> for HarvestOutputTuple {
+    fn from(result: HarvestOutputWrapper) -> HarvestOutputTuple {
+        let HarvestOutputWrapper {
+            dummy_1,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (dummy_1, dummy_2, dummy_3, dummy_4)
+    }
 }
 
 #[error_code]

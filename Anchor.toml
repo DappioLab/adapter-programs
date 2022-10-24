@@ -15,12 +15,12 @@ adapter_nft_finance = "ADPTyBr92sBCE1hdYBRvXbMpF4hKs17xyDjFPxopcsrh"
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "https://api.mainnet-beta.solana.com"
+# cluster = "https://api.mainnet-beta.solana.com"
 # cluster = "https://ssc-dao.genesysgo.net"
 # cluster = "https://solana-api.tt-prod.net"
 # cluster = "https://solana-api.projectserum.com"
 # cluster = "https://rpc-mainnet-fork.dappio.xyz"
-# cluster = "https://rpc-mainnet-fork.epochs.studio"
+cluster = "https://rpc-mainnet-fork.epochs.studio"
 wallet = "~/.config/solana/deploy.json"
 
 [scripts]
