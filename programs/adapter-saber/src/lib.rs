@@ -260,7 +260,7 @@ pub mod adapter_saber {
 
         let mut unstake_data = vec![];
         unstake_data.append(&mut sighash_arr.try_to_vec()?);
-        unstake_data.append(&mut input_struct.lp_amount.try_to_vec()?);
+        unstake_data.append(&mut input_struct.share_amount.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -272,7 +272,7 @@ pub mod adapter_saber {
 
         // Wrap Output
         let output_struct = UnstakeOutputWrapper {
-            lp_amount: input_struct.lp_amount,
+            lp_amount: input_struct.share_amount,
             dummy_2: 2000,
             ..Default::default()
         };
@@ -372,7 +372,7 @@ pub struct StakeInputWrapper {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct UnstakeInputWrapper {
-    pub lp_amount: u64,
+    pub share_amount: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]

@@ -159,7 +159,7 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "lpAmount",
+            "name": "shareAmount",
             "type": "u64"
           }
         ]

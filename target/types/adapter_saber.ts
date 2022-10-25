@@ -159,7 +159,7 @@ export type AdapterSaber = {
         "kind": "struct",
         "fields": [
           {
-            "name": "lpAmount",
+            "name": "shareAmount",
             "type": "u64"
           }
         ]
@@ -482,7 +482,7 @@ export const IDL: AdapterSaber = {
         "kind": "struct",
         "fields": [
           {
-            "name": "lpAmount",
+            "name": "shareAmount",
             "type": "u64"
           }
         ]
