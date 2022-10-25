@@ -7,7 +7,7 @@ use anchor_lang::solana_program::{
 };
 use anchor_spl::token::TokenAccount;
 
-declare_id!("ADPT4GbWTs9DXxo91YGBjNntYwLpXxn4gEbxfnUPfQoB");
+declare_id!("8s41oFgb8cFqeeTJZ4W5HN1LCmKkBCGTiZFUDmMyAsHT");
 
 #[program]
 pub mod adapter_saber {
