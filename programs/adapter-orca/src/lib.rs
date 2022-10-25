@@ -238,6 +238,10 @@ pub mod adapter_orca {
         let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
         let lp_token_amount_before = lp_token_account.amount;
 
+        let share_token_account_info = ctx.remaining_accounts[5].clone();
+        let mut share_token_account = Account::<TokenAccount>::try_from(&share_token_account_info)?;
+        let share_token_amount_before = share_token_account.amount;
+
         let stake_accounts = vec![
             AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), true),
             AccountMeta::new(ctx.remaining_accounts[1].key(), false),
@@ -270,8 +274,13 @@ pub mod adapter_orca {
         lp_token_account.reload();
         let lp_amount = lp_token_amount_before - lp_token_account.amount;
 
+        // Load share amount change
+        share_token_account.reload();
+        let share_amount = share_token_amount_before - share_token_account.amount;
+
         // Wrap Output
         let output_struct = StakeOutputWrapper {
+            share_amount: share_amount,
             lp_amount: lp_amount,
             ..Default::default()
         };
@@ -296,13 +305,17 @@ pub mod adapter_orca {
         msg!("Input: {:?}", input_struct);
         // Get the data from input_struct
 
-        let lp_amount = input_struct.lp_amount;
+        let lp_amount = input_struct.share_amount;
         msg!("lp_amount: {}", lp_amount.to_string());
 
         // Use remaining accounts
         let lp_token_account_info = ctx.remaining_accounts[1].clone();
         let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
         let lp_token_amount_before = lp_token_account.amount;
+
+        let share_token_account_info = ctx.remaining_accounts[5].clone();
+        let mut share_token_account = Account::<TokenAccount>::try_from(&share_token_account_info)?;
+        let share_token_amount_before = share_token_account.amount;
 
         let unstake_accounts = vec![
             AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), true),
@@ -337,8 +350,13 @@ pub mod adapter_orca {
         lp_token_account.reload();
         let lp_amount = lp_token_amount_before - lp_token_account.amount;
 
+        // Load share amount change
+        share_token_account.reload();
+        let share_amount = share_token_amount_before - share_token_account.amount;
+
         // Wrap Output
         let output_struct = UnstakeOutputWrapper {
+            share_amount: share_amount,
             lp_amount: lp_amount,
             ..Default::default()
         };
@@ -456,19 +474,19 @@ pub struct StakeInputWrapper {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct StakeOutputWrapper {
+    pub share_amount: u64,
     pub lp_amount: u64,
-    pub dummy_2: u64,
     pub dummy_3: u64,
     pub dummy_4: u64,
 }
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct UnstakeInputWrapper {
-    pub lp_amount: u64,
+    pub share_amount: u64,
 }
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct UnstakeOutputWrapper {
     pub lp_amount: u64,
-    pub dummy_2: u64,
+    pub share_amount: u64,
     pub dummy_3: u64,
     pub dummy_4: u64,
 }
