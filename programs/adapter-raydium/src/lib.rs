@@ -258,17 +258,17 @@ pub mod adapter_raydium {
 
         coin_token_account.reload()?;
         let coin_token_amount_after = coin_token_account.amount;
-        let coin_amount = coin_token_amount_after - coin_token_amount_before;
+        let token_a_amount = coin_token_amount_after - coin_token_amount_before;
 
         pc_token_account.reload()?;
         let pc_token_amount_after = pc_token_account.amount;
-        let pc_amount = pc_token_amount_after - pc_token_amount_before;
+        let token_b_amount = pc_token_amount_after - pc_token_amount_before;
 
 
         // Wrap Output
         let output_struct = RemoveLiquidityOutputWrapper {
-            coin_amount, 
-            pc_amount,
+            token_a_amount, 
+            token_b_amount,
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -494,8 +494,8 @@ pub struct AddLiquidityOutputWrapper {
 // OutputWrapper needs to take up all the space of 32 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct RemoveLiquidityOutputWrapper {
-    pub coin_amount: u64,
-    pub pc_amount: u64,
+    pub token_a_amount: u64,
+    pub token_b_amount: u64,
     pub dummy_3: u64,
     pub dummy_4: u64,
 }
@@ -562,12 +562,12 @@ impl From<AddLiquidityOutputWrapper> for AddLiquidityOutputTuple {
 impl From<RemoveLiquidityOutputWrapper> for RemoveLiquidityOutputTuple {
     fn from(result: RemoveLiquidityOutputWrapper) -> RemoveLiquidityOutputTuple {
         let RemoveLiquidityOutputWrapper {
-            coin_amount,
-            pc_amount,
+            token_a_amount,
+            token_b_amount: pc_amount,
             dummy_3,
             dummy_4,
         } = result;
-        (coin_amount, pc_amount, dummy_3, dummy_4)
+        (token_a_amount, pc_amount, dummy_3, dummy_4)
     }
 }
 
