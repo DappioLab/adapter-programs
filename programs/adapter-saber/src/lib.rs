@@ -211,6 +211,9 @@ pub mod adapter_saber {
         let token_b_amount = token_b_amount_after - token_b_amount_before;
 
         // Wrap Output
+        // NOTICE: for RemoveLiquiditySingle no mater is token A or token B, we'll update
+        // the amount in token_a_amount since there's only one tokenAccount state might change
+        // and also avoid determine token A or B by uncertain pool direction.
         let output_struct = RemoveLiquidityOutputWrapper {
             token_a_amount,
             token_b_amount,
