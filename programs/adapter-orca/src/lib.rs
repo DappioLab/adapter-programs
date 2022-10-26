@@ -58,7 +58,9 @@ pub mod adapter_orca {
 
         lp_token_account.reload()?;
         let lp_token_amount_after = lp_token_account.amount;
-        let lp_amount = lp_token_amount_after - lp_token_amount_before;
+        let lp_amount = lp_token_amount_after
+            .checked_sub(lp_token_amount_before)
+            .unwrap();
 
         msg!("lp_amount: {}", lp_amount.to_string());
         // Wrap Output
@@ -186,22 +188,24 @@ pub mod adapter_orca {
 
         // Load lp amount change
         lp_token_account.reload();
-        let lp_amount = lp_token_amount_before - lp_token_account.amount;
+        let lp_amount = lp_token_amount_before
+            .checked_sub(lp_token_account.amount)
+            .unwrap();
 
         // Load Token A amount change
-        let a_out_amount = token_a_amount_before
-            - Account::<TokenAccount>::try_from(&ctx.remaining_accounts[7].clone())
-                .unwrap()
-                .amount;
+        let a_out_amount = Account::<TokenAccount>::try_from(&ctx.remaining_accounts[7].clone())
+            .unwrap()
+            .amount
+            .checked_sub(token_a_amount_before)
+            .unwrap();
 
         // Load Token B amount change only for both side
         let b_out_amount = match input_struct.action {
-            2 => {
-                token_b_amount_before
-                    - Account::<TokenAccount>::try_from(&ctx.remaining_accounts[8].clone())
-                        .unwrap()
-                        .amount
-            }
+            2 => Account::<TokenAccount>::try_from(&ctx.remaining_accounts[8].clone())
+                .unwrap()
+                .amount
+                .checked_sub(token_b_amount_before)
+                .unwrap(),
             _ => 0_u64,
         };
         // Wrap Output
@@ -272,11 +276,16 @@ pub mod adapter_orca {
 
         // Load lp amount change
         lp_token_account.reload();
-        let lp_amount = lp_token_amount_before - lp_token_account.amount;
+        let lp_amount = lp_token_amount_before
+            .checked_sub(lp_token_account.amount)
+            .unwrap();
 
         // Load share amount change
         share_token_account.reload();
-        let share_amount = share_token_amount_before - share_token_account.amount;
+        let share_amount = share_token_account
+            .amount
+            .checked_sub(share_token_amount_before)
+            .unwrap();
 
         // Wrap Output
         let output_struct = StakeOutputWrapper {
@@ -348,11 +357,16 @@ pub mod adapter_orca {
         lp_token_account.reload();
         // Load lp amount change
         lp_token_account.reload();
-        let lp_amount = lp_token_amount_before - lp_token_account.amount;
+        let lp_amount = lp_token_account
+            .amount
+            .checked_sub(lp_token_amount_before)
+            .unwrap();
 
         // Load share amount change
         share_token_account.reload();
-        let share_amount = share_token_amount_before - share_token_account.amount;
+        let share_amount = share_token_amount_before
+            .checked_sub(share_token_account.amount)
+            .unwrap();
 
         // Wrap Output
         let output_struct = UnstakeOutputWrapper {
@@ -412,7 +426,10 @@ pub mod adapter_orca {
 
         // Load reward amount change
         reward_token_account.reload();
-        let reward_amount = reward_token_amount_before - reward_token_account.amount;
+        let reward_amount = reward_token_account
+            .amount
+            .checked_sub(reward_token_amount_before)
+            .unwrap();
 
         // Wrap Output
         let output_struct = HarvestOutputWrapper {
