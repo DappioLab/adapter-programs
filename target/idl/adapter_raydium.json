@@ -21,7 +21,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "addLiquidity",
@@ -42,7 +47,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "removeLiquidity",
@@ -63,7 +73,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "stake",
@@ -84,7 +99,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unstake",
@@ -105,7 +125,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "harvest",
@@ -126,7 +151,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
@@ -603,137 +633,237 @@
       }
     },
     {
-      "name": "SwapResultWrapper",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "outAmount",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "AddLiquidityResultWrapper",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "lpAmount",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "RemoveLiquidityResultWrapper",
+      "name": "SwapInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "swapInAmount",
             "type": "u64"
+          },
+          {
+            "name": "swapMinOutAmount",
+            "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "StakeResultWrapper",
+      "name": "AddLiquidityInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenInAmount",
+            "type": "u64"
+          },
+          {
+            "name": "poolDirection",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RemoveLiquidityInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "lpAmount",
             "type": "u64"
+          },
+          {
+            "name": "poolDirection",
+            "type": "u8"
           }
         ]
       }
     },
     {
-      "name": "UnstakeResultWrapper",
+      "name": "StakeInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lpAmount",
+            "type": "u64"
+          },
+          {
+            "name": "version",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnstakeInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "shareAmount",
             "type": "u64"
+          },
+          {
+            "name": "version",
+            "type": "u8"
           }
         ]
       }
     },
     {
-      "name": "GatewayStateWrapper",
+      "name": "HarvestInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
-            "type": "u64"
-          },
-          {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
-            "type": "u64"
-          },
-          {
             "name": "version",
             "type": "u8"
-          },
+          }
+        ]
+      }
+    },
+    {
+      "name": "SwapOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
+            "name": "swapOutAmount",
             "type": "u64"
           },
           {
-            "name": "poolDirection",
-            "type": "u8"
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AddLiquidityOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lpAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RemoveLiquidityOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenAAmount",
+            "type": "u64"
+          },
+          {
+            "name": "tokenBAmount",
+            "type": "u64"
+          },
+          {
+            "name": "lpAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnstakeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lpAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HarvestOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rewardAAmount",
+            "type": "u64"
+          },
+          {
+            "name": "rewardBAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
           }
         ]
       }
