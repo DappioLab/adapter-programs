@@ -7,7 +7,7 @@ use anchor_lang::solana_program::{
 };
 use anchor_spl::token::TokenAccount;
 
-declare_id!("8s41oFgb8cFqeeTJZ4W5HN1LCmKkBCGTiZFUDmMyAsHT");
+declare_id!("ADPT4GbWTs9DXxo91YGBjNntYwLpXxn4gEbxfnUPfQoB");
 
 #[program]
 pub mod adapter_saber {
@@ -98,7 +98,6 @@ pub mod adapter_saber {
 
         msg!("Input: {:?}", input_struct);
 
-
         let (ix, token_a_amount_before, token_b_amount_before) = match input_struct.action {
             // RemoveLiquidity
             2 => {
@@ -135,11 +134,15 @@ pub mod adapter_saber {
                 let token_b_account = Account::<TokenAccount>::try_from(&token_b_account_info)?;
                 let token_b_amount_before = token_b_account.amount;
 
-                (Instruction {
-                    program_id: ctx.accounts.base_program_id.key(),
-                    accounts: remove_lp_accounts,
-                    data: remove_lp_data,
-                }, token_a_amount_before, token_b_amount_before)
+                (
+                    Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts: remove_lp_accounts,
+                        data: remove_lp_data,
+                    },
+                    token_a_amount_before,
+                    token_b_amount_before,
+                )
             }
             // RemoveLiquiditySingle
             3 => {
@@ -165,16 +168,19 @@ pub mod adapter_saber {
                 remove_lp_data.append(&mut input_struct.lp_amount.try_to_vec()?);
                 remove_lp_data.append(&mut minimal_receive.try_to_vec()?);
 
-
                 let token_a_account_info = ctx.remaining_accounts[7].clone();
                 let token_a_account = Account::<TokenAccount>::try_from(&token_a_account_info)?;
                 let token_a_amount_before = token_a_account.amount;
 
-                (Instruction {
-                    program_id: ctx.accounts.base_program_id.key(),
-                    accounts: remove_lp_accounts,
-                    data: remove_lp_data,
-                }, token_a_amount_before, 0)
+                (
+                    Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts: remove_lp_accounts,
+                        data: remove_lp_data,
+                    },
+                    token_a_amount_before,
+                    0,
+                )
             }
             _ => {
                 return Err(ErrorCode::UnsupportedAction.into());

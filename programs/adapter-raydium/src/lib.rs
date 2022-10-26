@@ -10,7 +10,7 @@ use anchor_spl::token::TokenAccount;
 pub mod price;
 use crate::price::{get_raydium_lp_price, PoolDirectionP};
 
-declare_id!("4mDgdHpbrAgnfoFziQZfnTRtDR4HN3MxG5GFhFFv7QNf");
+declare_id!("ADPT1q4xG8F9m64cQyjqGe11cCXQq6vL4beY5hJavhQ5");
 
 #[program]
 pub mod adapter_raydium {
