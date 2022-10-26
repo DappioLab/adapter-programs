@@ -373,12 +373,19 @@ pub mod adapter_orca {
 
     pub fn harvest<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
         // Use remaining accounts
         let reward_token_account_info = ctx.remaining_accounts[5].clone();
         let mut reward_token_account =
             Account::<TokenAccount>::try_from(&reward_token_account_info)?;
         let reward_token_amount_before = reward_token_account.amount;
+
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = HarvestInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
 
         // Harvest
         let harvest_ix: u8 = 4;
