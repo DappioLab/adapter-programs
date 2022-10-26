@@ -508,3 +508,70 @@ pub struct HarvestOutputWrapper {
     pub dummy_3: u64,
     pub dummy_4: u64,
 }
+
+// Make a tuple for being accessed by index rather than field name
+pub type AddLiquidityOutputTuple = (u64, u64, u64, u64);
+pub type RemoveLiquidityOutputTuple = (u64, u64, u64, u64);
+pub type StakeOutputTuple = (u64, u64, u64, u64);
+pub type UnstakeOutputTuple = (u64, u64, u64, u64);
+pub type HarvestOutputTuple = (u64, u64, u64, u64);
+
+impl From<AddLiquidityOutputWrapper> for AddLiquidityOutputTuple {
+    fn from(result: AddLiquidityOutputWrapper) -> AddLiquidityOutputTuple {
+        let AddLiquidityOutputWrapper {
+            lp_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (lp_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<RemoveLiquidityOutputWrapper> for RemoveLiquidityOutputTuple {
+    fn from(result: RemoveLiquidityOutputWrapper) -> RemoveLiquidityOutputTuple {
+        let RemoveLiquidityOutputWrapper {
+            token_a_out_amount,
+            token_b_out_amount,
+            lp_amount,
+            dummy_4,
+        } = result;
+        (token_a_out_amount, token_b_out_amount, lp_amount, dummy_4)
+    }
+}
+
+impl From<StakeOutputWrapper> for StakeOutputTuple {
+    fn from(result: StakeOutputWrapper) -> StakeOutputTuple {
+        let StakeOutputWrapper {
+            share_amount,
+            lp_amount,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (share_amount, lp_amount, dummy_3, dummy_4)
+    }
+}
+
+impl From<UnstakeOutputWrapper> for UnstakeOutputTuple {
+    fn from(result: UnstakeOutputWrapper) -> UnstakeOutputTuple {
+        let UnstakeOutputWrapper {
+            lp_amount,
+            share_amount,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (lp_amount, share_amount, dummy_3, dummy_4)
+    }
+}
+
+impl From<HarvestOutputWrapper> for HarvestOutputTuple {
+    fn from(result: HarvestOutputWrapper) -> HarvestOutputTuple {
+        let HarvestOutputWrapper {
+            reward_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (reward_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
