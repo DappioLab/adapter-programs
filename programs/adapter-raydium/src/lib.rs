@@ -208,6 +208,10 @@ pub mod adapter_raydium {
         msg!("Input: {:?}", input_struct);
 
         // Use remaining accounts
+        let lp_token_account_info = ctx.remaining_accounts[15].clone();
+        let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
+        let lp_token_amount_before = lp_token_account.amount;
+
         let coin_token_account_info = ctx.remaining_accounts[16].clone();
         let mut coin_token_account = Account::<TokenAccount>::try_from(&coin_token_account_info)?;
         let coin_token_amount_before = coin_token_account.amount;
@@ -254,6 +258,10 @@ pub mod adapter_raydium {
 
         invoke(&ix, ctx.remaining_accounts)?;
 
+        lp_token_account.reload()?;
+        let lp_token_amount_after = lp_token_account.amount;
+        let lp_amount = lp_token_amount_before - lp_token_amount_after;
+
         coin_token_account.reload()?;
         let coin_token_amount_after = coin_token_account.amount;
         let token_a_amount = coin_token_amount_after - coin_token_amount_before;
@@ -266,6 +274,7 @@ pub mod adapter_raydium {
         let output_struct = RemoveLiquidityOutputWrapper {
             token_a_amount,
             token_b_amount,
+            lp_amount,
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -288,6 +297,10 @@ pub mod adapter_raydium {
 
         msg!("Input: {:?}", input_struct);
 
+        let lp_token_account_info = ctx.remaining_accounts[4].clone();
+        let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
+        let lp_token_amount_before = lp_token_account.amount;
+
         let stake_ix = match input_struct.version {
             3 => 10,
             5 => 11,
@@ -298,9 +311,13 @@ pub mod adapter_raydium {
 
         invoke_stake(&ctx, stake_ix, input_struct.lp_amount)?;
 
+        lp_token_account.reload()?;
+        let lp_token_amount_after = lp_token_account.amount;
+        let share_amount = lp_token_amount_before - lp_token_amount_after;
+
         // Wrap Output
         let output_struct = StakeOutputWrapper {
-            dummy_1: 1000,
+            share_amount,
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -323,6 +340,10 @@ pub mod adapter_raydium {
 
         msg!("Input: {:?}", input_struct);
 
+        let lp_token_account_info = ctx.remaining_accounts[4].clone();
+        let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
+        let lp_token_amount_before = lp_token_account.amount;
+
         let unstake_ix = match input_struct.version {
             3 => 11,
             5 => 12,
@@ -333,10 +354,13 @@ pub mod adapter_raydium {
 
         invoke_stake(&ctx, unstake_ix, input_struct.share_amount)?;
 
+        lp_token_account.reload()?;
+        let lp_token_amount_after = lp_token_account.amount;
+        let lp_amount = lp_token_amount_after - lp_token_amount_before;
+
         // Wrap Output
         let output_struct = UnstakeOutputWrapper {
-            lp_amount: input_struct.share_amount,
-            dummy_2: 2000,
+            lp_amount,
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -356,9 +380,20 @@ pub mod adapter_raydium {
 
         msg!("Input: {:?}", input_struct);
 
-        let unstake_ix = match input_struct.version {
-            3 => 11,
-            5 => 12,
+        let reward_token_a_account_info = ctx.remaining_accounts[6].clone();
+        let mut reward_token_a_account =
+            Account::<TokenAccount>::try_from(&reward_token_a_account_info)?;
+        let reward_token_a_amount_before = reward_token_a_account.amount;
+
+        let (unstake_ix, reward_token_b_before) = match input_struct.version {
+            3 => (11, 0),
+            5 => {
+                let reward_token_b_account_info = ctx.remaining_accounts[10].clone();
+                let reward_token_b_account =
+                    Account::<TokenAccount>::try_from(&reward_token_b_account_info)?;
+                let reward_token_b_amount_before = reward_token_b_account.amount;
+                (12, reward_token_b_amount_before)
+            }
             _ => {
                 return Err(ErrorCode::UnsupportedVersion.into());
             }
@@ -366,8 +401,29 @@ pub mod adapter_raydium {
 
         invoke_stake(&ctx, unstake_ix, 0)?;
 
+        reward_token_a_account.reload()?;
+        let reward_token_a_amount_after = reward_token_a_account.amount;
+        let reward_a_amount = reward_token_a_amount_after - reward_token_a_amount_before;
+
+        let reward_token_b_after = match input_struct.version {
+            3 => 0,
+            5 => {
+                let reward_token_b_account_info = ctx.remaining_accounts[10].clone();
+                let reward_token_b_account =
+                    Account::<TokenAccount>::try_from(&reward_token_b_account_info)?;
+                let reward_token_b_amount_after = reward_token_b_account.amount;
+                reward_token_b_amount_after
+            }
+            _ => {
+                return Err(ErrorCode::UnsupportedVersion.into());
+            }
+        };
+        let reward_b_amount = reward_token_b_after - reward_token_b_before;
+
         // Wrap Output
         let output_struct = HarvestOutputWrapper {
+            reward_a_amount,
+            reward_b_amount,
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -490,14 +546,14 @@ pub struct AddLiquidityOutputWrapper {
 pub struct RemoveLiquidityOutputWrapper {
     pub token_a_amount: u64,
     pub token_b_amount: u64,
-    pub dummy_3: u64,
+    pub lp_amount: u64,
     pub dummy_4: u64,
 }
 
 // OutputWrapper needs to take up all the space of 32 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct StakeOutputWrapper {
-    pub dummy_1: u64,
+    pub share_amount: u64,
     pub dummy_2: u64,
     pub dummy_3: u64,
     pub dummy_4: u64,
@@ -515,8 +571,8 @@ pub struct UnstakeOutputWrapper {
 // OutputWrapper needs to take up all the space of 32 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct HarvestOutputWrapper {
-    pub dummy_1: u64,
-    pub dummy_2: u64,
+    pub reward_a_amount: u64,
+    pub reward_b_amount: u64,
     pub dummy_3: u64,
     pub dummy_4: u64,
 }
@@ -557,23 +613,23 @@ impl From<RemoveLiquidityOutputWrapper> for RemoveLiquidityOutputTuple {
     fn from(result: RemoveLiquidityOutputWrapper) -> RemoveLiquidityOutputTuple {
         let RemoveLiquidityOutputWrapper {
             token_a_amount,
-            token_b_amount: pc_amount,
-            dummy_3,
+            token_b_amount,
+            lp_amount,
             dummy_4,
         } = result;
-        (token_a_amount, pc_amount, dummy_3, dummy_4)
+        (token_a_amount, token_b_amount, lp_amount, dummy_4)
     }
 }
 
 impl From<StakeOutputWrapper> for StakeOutputTuple {
     fn from(result: StakeOutputWrapper) -> StakeOutputTuple {
         let StakeOutputWrapper {
-            dummy_1,
+            share_amount,
             dummy_2,
             dummy_3,
             dummy_4,
         } = result;
-        (dummy_1, dummy_2, dummy_3, dummy_4)
+        (share_amount, dummy_2, dummy_3, dummy_4)
     }
 }
 
@@ -592,12 +648,12 @@ impl From<UnstakeOutputWrapper> for UnstakeOutputTuple {
 impl From<HarvestOutputWrapper> for HarvestOutputTuple {
     fn from(result: HarvestOutputWrapper) -> HarvestOutputTuple {
         let HarvestOutputWrapper {
-            dummy_1,
-            dummy_2,
+            reward_a_amount,
+            reward_b_amount,
             dummy_3,
             dummy_4,
         } = result;
-        (dummy_1, dummy_2, dummy_3, dummy_4)
+        (reward_a_amount, reward_b_amount, dummy_3, dummy_4)
     }
 }
 
