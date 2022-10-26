@@ -20,11 +20,11 @@ pub mod adapter_raydium {
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
         input: Vec<u8>,
     ) -> Result<()> {
-         // Get Input
-         let mut input_bytes = &input[..];
-         let input_struct = SwapInputWrapper::deserialize(&mut input_bytes)?;
- 
-         msg!("Input: {:?}", input_struct);
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = SwapInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
 
         // Use remaining accounts
         let dest_token_account_info = ctx.remaining_accounts[16].clone();
@@ -74,18 +74,17 @@ pub mod adapter_raydium {
         msg!("out_amount: {}", swap_out_amount.to_string());
 
         // Return Result
-        let output_struct = SwapOutputWrapper { 
-            swap_out_amount, 
+        let output_struct = SwapOutputWrapper {
+            swap_out_amount,
             ..Default::default()
         };
 
         let mut output: Vec<u8> = Vec::new();
         output_struct.serialize(&mut output).unwrap();
- 
+
         anchor_lang::solana_program::program::set_return_data(&output);
- 
+
         msg!("Output: {:?}", output_struct);
- 
 
         Ok(())
     }
@@ -201,7 +200,7 @@ pub mod adapter_raydium {
     pub fn remove_liquidity<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
         input: Vec<u8>,
-    ) -> Result<()> { 
+    ) -> Result<()> {
         // Get Input
         let mut input_bytes = &input[..];
         let input_struct = RemoveLiquidityInputWrapper::deserialize(&mut input_bytes)?;
@@ -255,7 +254,6 @@ pub mod adapter_raydium {
 
         invoke(&ix, ctx.remaining_accounts)?;
 
-
         coin_token_account.reload()?;
         let coin_token_amount_after = coin_token_account.amount;
         let token_a_amount = coin_token_amount_after - coin_token_amount_before;
@@ -264,10 +262,9 @@ pub mod adapter_raydium {
         let pc_token_amount_after = pc_token_account.amount;
         let token_b_amount = pc_token_amount_after - pc_token_amount_before;
 
-
         // Wrap Output
         let output_struct = RemoveLiquidityOutputWrapper {
-            token_a_amount, 
+            token_a_amount,
             token_b_amount,
             ..Default::default()
         };
@@ -283,7 +280,7 @@ pub mod adapter_raydium {
 
     pub fn stake<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
-        input: Vec<u8>
+        input: Vec<u8>,
     ) -> Result<()> {
         // Get Input
         let mut input_bytes = &input[..];
@@ -334,11 +331,11 @@ pub mod adapter_raydium {
             }
         };
 
-        invoke_stake(&ctx, unstake_ix, input_struct.lp_amount)?;
+        invoke_stake(&ctx, unstake_ix, input_struct.share_amount)?;
 
         // Wrap Output
         let output_struct = UnstakeOutputWrapper {
-            lp_amount: input_struct.lp_amount,
+            lp_amount: input_struct.share_amount,
             dummy_2: 2000,
             ..Default::default()
         };
@@ -352,10 +349,7 @@ pub mod adapter_raydium {
         Ok(())
     }
 
-    pub fn harvest(
-        ctx: Context<Action>,
-        input: Vec<u8>
-    ) -> Result<()> {
+    pub fn harvest(ctx: Context<Action>, input: Vec<u8>) -> Result<()> {
         // Get Input
         let mut input_bytes = &input[..];
         let input_struct = HarvestInputWrapper::deserialize(&mut input_bytes)?;
@@ -372,8 +366,8 @@ pub mod adapter_raydium {
 
         invoke_stake(&ctx, unstake_ix, 0)?;
 
-         // Wrap Output
-         let output_struct = HarvestOutputWrapper {
+        // Wrap Output
+        let output_struct = HarvestOutputWrapper {
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -464,7 +458,7 @@ pub struct StakeInputWrapper {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct UnstakeInputWrapper {
-    pub lp_amount: u64,
+    pub share_amount: u64,
     pub version: u8,
 }
 
