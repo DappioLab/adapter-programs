@@ -98,7 +98,7 @@ pub mod adapter_saber {
 
         msg!("Input: {:?}", input_struct);
 
-        let ix = match input_struct.action {
+        let (ix, token_a_amount_before, token_b_amount_before) = match input_struct.action {
             // RemoveLiquidity
             2 => {
                 const REMOVE_LP_IX: u8 = 3;
@@ -126,11 +126,23 @@ pub mod adapter_saber {
                 remove_lp_data.append(&mut minimal_receive.try_to_vec()?);
                 remove_lp_data.append(&mut minimal_receive.try_to_vec()?);
 
-                Instruction {
-                    program_id: ctx.accounts.base_program_id.key(),
-                    accounts: remove_lp_accounts,
-                    data: remove_lp_data,
-                }
+                let token_a_account_info = ctx.remaining_accounts[7].clone();
+                let token_a_account = Account::<TokenAccount>::try_from(&token_a_account_info)?;
+                let token_a_amount_before = token_a_account.amount;
+
+                let token_b_account_info = ctx.remaining_accounts[8].clone();
+                let token_b_account = Account::<TokenAccount>::try_from(&token_b_account_info)?;
+                let token_b_amount_before = token_b_account.amount;
+
+                (
+                    Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts: remove_lp_accounts,
+                        data: remove_lp_data,
+                    },
+                    token_a_amount_before,
+                    token_b_amount_before,
+                )
             }
             // RemoveLiquiditySingle
             3 => {
@@ -156,11 +168,19 @@ pub mod adapter_saber {
                 remove_lp_data.append(&mut input_struct.lp_amount.try_to_vec()?);
                 remove_lp_data.append(&mut minimal_receive.try_to_vec()?);
 
-                Instruction {
-                    program_id: ctx.accounts.base_program_id.key(),
-                    accounts: remove_lp_accounts,
-                    data: remove_lp_data,
-                }
+                let token_a_account_info = ctx.remaining_accounts[7].clone();
+                let token_a_account = Account::<TokenAccount>::try_from(&token_a_account_info)?;
+                let token_a_amount_before = token_a_account.amount;
+
+                (
+                    Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts: remove_lp_accounts,
+                        data: remove_lp_data,
+                    },
+                    token_a_amount_before,
+                    0,
+                )
             }
             _ => {
                 return Err(ErrorCode::UnsupportedAction.into());
@@ -169,10 +189,40 @@ pub mod adapter_saber {
 
         invoke(&ix, ctx.remaining_accounts)?;
 
+        let (token_a_amount_after, token_b_amount_after) = match input_struct.action {
+            2 => {
+                let token_a_account_info = ctx.remaining_accounts[7].clone();
+                let mut token_a_account = Account::<TokenAccount>::try_from(&token_a_account_info)?;
+                let token_a_amount_after = token_a_account.amount;
+
+                let token_b_account_info = ctx.remaining_accounts[8].clone();
+                let mut token_b_account = Account::<TokenAccount>::try_from(&token_b_account_info)?;
+                let token_b_amount_after = token_b_account.amount;
+
+                (token_a_amount_after, token_b_amount_after)
+            }
+            3 => {
+                let token_a_account_info = ctx.remaining_accounts[7].clone();
+                let mut token_a_account = Account::<TokenAccount>::try_from(&token_a_account_info)?;
+                let token_a_amount_after = token_a_account.amount;
+
+                (token_a_amount_after, 0)
+            }
+            _ => {
+                return Err(ErrorCode::UnsupportedAction.into());
+            }
+        };
+
+        let token_a_amount = token_a_amount_after - token_a_amount_before;
+        let token_b_amount = token_b_amount_after - token_b_amount_before;
+
         // Wrap Output
+        // NOTICE: for RemoveLiquiditySingle no mater is token A or token B, we'll update
+        // the amount in token_a_amount since there's only one tokenAccount state might change
+        // and also avoid determine token A or B by uncertain pool direction.
         let output_struct = RemoveLiquidityOutputWrapper {
-            dummy_1: 500,
-            dummy_2: 1000,
+            token_a_amount,
+            token_b_amount,
             ..Default::default()
         };
 
@@ -390,8 +440,8 @@ pub struct AddLiquidityOutputWrapper {
 // OutputWrapper needs to take up all the space of 32 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct RemoveLiquidityOutputWrapper {
-    pub dummy_1: u64,
-    pub dummy_2: u64,
+    pub token_a_amount: u64,
+    pub token_b_amount: u64,
     pub dummy_3: u64,
     pub dummy_4: u64,
 }
@@ -445,12 +495,12 @@ impl From<AddLiquidityOutputWrapper> for AddLiquidityOutputTuple {
 impl From<RemoveLiquidityOutputWrapper> for RemoveLiquidityOutputTuple {
     fn from(result: RemoveLiquidityOutputWrapper) -> RemoveLiquidityOutputTuple {
         let RemoveLiquidityOutputWrapper {
-            dummy_1,
-            dummy_2,
+            token_a_amount,
+            token_b_amount,
             dummy_3,
             dummy_4,
         } = result;
-        (dummy_1, dummy_2, dummy_3, dummy_4)
+        (token_a_amount, token_b_amount, dummy_3, dummy_4)
     }
 }
 
