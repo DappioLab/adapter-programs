@@ -41,7 +41,7 @@ pub mod adapter_orca {
             AccountMeta::new_readonly(ctx.remaining_accounts[8].key(), false),
         ];
         // Build Ix Data
-        const ADD_LP_IX: u8 = 2;
+        const ADD_LP_IX: u8 = 4;
         let minimal_receive: u64 = 0;
         let mut add_lp_data = vec![];
         add_lp_data.append(&mut ADD_LP_IX.to_le_bytes().to_vec());
