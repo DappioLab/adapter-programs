@@ -15,8 +15,14 @@ pub mod adapter_nft_finance {
 
     pub fn lock_nft<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
-        _input: Vec<u8>,
+        input: Vec<u8>,
     ) -> Result<()> {
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = LockNftInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
+
         let prove_token_account_info = ctx.remaining_accounts[7].clone();
         let mut prove_token_account = Account::<TokenAccount>::try_from(&prove_token_account_info)?;
         let prove_token_amount_before = prove_token_account.amount;
@@ -72,8 +78,14 @@ pub mod adapter_nft_finance {
 
     pub fn unlock_nft<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
-        _input: Vec<u8>,
+        input: Vec<u8>,
     ) -> Result<()> {
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = UnlockNftInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
+
         let unlock_nft_accounts = vec![
             AccountMeta::new(ctx.remaining_accounts[0].key(), true),
             AccountMeta::new(ctx.remaining_accounts[1].key(), false),
@@ -123,6 +135,8 @@ pub mod adapter_nft_finance {
         // Get Input
         let mut input_bytes = &input[..];
         let input_struct = StakeProofInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
 
         let farm_token_account_info = ctx.remaining_accounts[4].clone();
         let mut farm_token_account = Account::<TokenAccount>::try_from(&farm_token_account_info)?;
@@ -183,6 +197,8 @@ pub mod adapter_nft_finance {
         let mut input_bytes = &input[..];
         let input_struct = UnstakeProofInputWrapper::deserialize(&mut input_bytes)?;
 
+        msg!("Input: {:?}", input_struct);
+
         let prove_token_account_info = ctx.remaining_accounts[3].clone();
         let mut prove_token_account = Account::<TokenAccount>::try_from(&prove_token_account_info)?;
         let prove_token_amount_before = prove_token_account.amount;
@@ -236,8 +252,14 @@ pub mod adapter_nft_finance {
 
     pub fn claim<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
-        _input: Vec<u8>,
+        input: Vec<u8>,
     ) -> Result<()> {
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = ClaimInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
+
         let reward_token_account_info = ctx.remaining_accounts[2].clone();
         let mut reward_token_account =
             Account::<TokenAccount>::try_from(&reward_token_account_info)?;
