@@ -21,7 +21,12 @@ export type AdapterTulip = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "withdraw",
@@ -42,7 +47,12 @@ export type AdapterTulip = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "withdrawMultiDepositVaultThroughMango",
@@ -486,7 +496,12 @@ export type AdapterTulip = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unsupply",
@@ -507,7 +522,12 @@ export type AdapterTulip = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1853,83 +1873,19 @@ export type AdapterTulip = {
       }
     },
     {
-      "name": "GatewayStateWrapper",
+      "name": "DepositInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
+            "name": "lpAmount",
             "type": "u64"
-          },
-          {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
-            "type": "u64"
-          },
-          {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
-            "type": "u64"
-          },
-          {
-            "name": "poolDirection",
-            "type": "u8"
           }
         ]
       }
     },
     {
-      "name": "DepositResultWrapper",
+      "name": "WithdrawInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
@@ -1941,12 +1897,120 @@ export type AdapterTulip = {
       }
     },
     {
-      "name": "WithdrawResultWrapper",
+      "name": "SupplyInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "supplyAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnsupplyInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reservedAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawOutputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "lpAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SupplyOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reservedAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnsupplyOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "unsupplyAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
             "type": "u64"
           }
         ]
@@ -2812,7 +2876,12 @@ export const IDL: AdapterTulip = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "withdraw",
@@ -2833,7 +2902,12 @@ export const IDL: AdapterTulip = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "withdrawMultiDepositVaultThroughMango",
@@ -3277,7 +3351,12 @@ export const IDL: AdapterTulip = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unsupply",
@@ -3298,7 +3377,12 @@ export const IDL: AdapterTulip = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -4644,83 +4728,19 @@ export const IDL: AdapterTulip = {
       }
     },
     {
-      "name": "GatewayStateWrapper",
+      "name": "DepositInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
+            "name": "lpAmount",
             "type": "u64"
-          },
-          {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
-            "type": "u64"
-          },
-          {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
-            "type": "u64"
-          },
-          {
-            "name": "poolDirection",
-            "type": "u8"
           }
         ]
       }
     },
     {
-      "name": "DepositResultWrapper",
+      "name": "WithdrawInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
@@ -4732,12 +4752,120 @@ export const IDL: AdapterTulip = {
       }
     },
     {
-      "name": "WithdrawResultWrapper",
+      "name": "SupplyInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "supplyAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnsupplyInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reservedAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawOutputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "lpAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SupplyOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reservedAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnsupplyOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "unsupplyAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
             "type": "u64"
           }
         ]

@@ -2,16 +2,19 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{
     hash::hash,
     instruction::{AccountMeta, Instruction},
+    program::invoke,
     pubkey::Pubkey,
-    program::invoke
 };
-use anchor_spl::token::{TokenAccount, Mint};
+use anchor_spl::token::{Mint, TokenAccount};
 
+pub mod common;
 pub mod farms;
 pub mod vaults;
-pub mod common;
-use crate::vaults::instructions::{new_withdraw_multi_deposit_optimizer_vault_ix, new_withdraw_deposit_tracking_ix, new_issue_shares_ix};
-use crate::vaults::accounts::{vault_base::VaultBaseV1};
+use crate::vaults::accounts::vault_base::VaultBaseV1;
+use crate::vaults::instructions::{
+    new_issue_shares_ix, new_withdraw_deposit_tracking_ix,
+    new_withdraw_multi_deposit_optimizer_vault_ix,
+};
 
 declare_id!("ADPT9nhC1asRcEB13FKymLTatqWGCuZHDznGgnakWKxW");
 
@@ -28,7 +31,14 @@ pub mod adapter_tulip {
     /// so that you can measure your accrued rewards automatically.
     pub fn deposit<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = DepositInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
+
         // Deriving Keys
         let authority = ctx.remaining_accounts[0].clone();
         let vault = ctx.remaining_accounts[1].clone();
@@ -41,30 +51,15 @@ pub mod adapter_tulip {
         let receiving_shares_account = ctx.remaining_accounts[3].clone();
         let depositing_underlying_account = ctx.remaining_accounts[8].clone();
 
-        let mut share_token_account = Account::<TokenAccount>::try_from(&deposit_tracking_hold_account)?;
+        let mut share_token_account =
+            Account::<TokenAccount>::try_from(&deposit_tracking_hold_account)?;
         let share_token_amount_before = share_token_account.amount;
 
-        // let farm = Farm::Raydium { name: RAYSRM };
         let farm_key = {
-            // let loader: AccountLoader<RaydiumVaultV1> = AccountLoader::try_from_unchecked(
-            //     &ctx.accounts.base_program_id.key(),
-            //     &vault,
-            // )?;
-            // {
-            //     let vault = loader.load()?;
-            //     vault.base.farm
-            // }
             let mut vault_data = &**vault.try_borrow_data().unwrap();
             let vault_account = VaultBaseV1::deserialize(&mut vault_data).unwrap();
             vault_account.farm
         };
-
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
-        let current_index = gateway_state.current_index;
-        let amount = gateway_state.payload_queue[current_index as usize] as u64;
-
-        msg!("amount: {}", &amount.to_string());
 
         /*
             if this error is returned, it means the depositing_underlying_account
@@ -84,7 +79,7 @@ pub mod adapter_tulip {
             depositing_underlying_account.key(),
             // farm,
             farm_key.into(),
-            amount,
+            input_struct.lp_amount,
             ctx.accounts.base_program_id.key(),
         );
         anchor_lang::solana_program::program::invoke(
@@ -106,14 +101,17 @@ pub mod adapter_tulip {
         let share_token_amount_after = share_token_account.amount;
         let share_amount = share_token_amount_after - share_token_amount_before;
 
-        // Return Result
-        let result = DepositResultWrapper {
+        // Wrap Output
+        let output_struct = DepositOutputWrapper {
             share_amount,
+            ..Default::default()
         };
-        let mut buffer: Vec<u8> = Vec::new();
-        result.serialize(&mut buffer).unwrap();
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
 
-        anchor_lang::solana_program::program::set_return_data(&buffer);
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
@@ -123,7 +121,14 @@ pub mod adapter_tulip {
     /// tracking account
     pub fn withdraw<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = WithdrawInputWrapper::deserialize(&mut input_bytes)?;
+
+        msg!("Input: {:?}", input_struct);
+
         // Deriving Keys
         let authority = ctx.remaining_accounts[0].clone();
         let vault = ctx.remaining_accounts[1].clone();
@@ -138,23 +143,7 @@ pub mod adapter_tulip {
         let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
         let lp_token_amount_before = lp_token_account.amount;
 
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
-        let current_index = gateway_state.current_index;
-        let amount = gateway_state.payload_queue[current_index as usize] as u64;
-
-        msg!("amount: {}", &amount.to_string());
-
-        // let farm = Farm::Raydium { name: RAYSRM };
         let farm_key = {
-            // let loader: AccountLoader<RaydiumVaultV1> = AccountLoader::try_from_unchecked(
-            //     &ctx.accounts.base_program_id.key(),
-            //     &vault,
-            // )?;
-            // {
-            //     let vault = loader.load()?;
-            //     vault.base.farm
-            // }
             let mut vault_data = &**vault.try_borrow_data().unwrap();
             let vault_account = VaultBaseV1::deserialize(&mut vault_data).unwrap();
             vault_account.farm
@@ -170,21 +159,21 @@ pub mod adapter_tulip {
             vault.key(),
             farm_key.into(),
             // farm,
-            amount,
+            input_struct.share_amount,
             ctx.accounts.base_program_id.key(),
         );
         anchor_lang::solana_program::program::invoke(
-             &ix,
-             &[
-                 authority.clone(),
-                 clock.to_account_info(),
-                 deposit_tracking_account.clone(),
-                 deposit_tracking_pda.clone(),
-                 deposit_tracking_hold_account.to_account_info(),
-                 receiving_shares_account.to_account_info(),
-                 shares_mint.to_account_info(),
-                 vault.clone(),
-             ],
+            &ix,
+            &[
+                authority.clone(),
+                clock.to_account_info(),
+                deposit_tracking_account.clone(),
+                deposit_tracking_pda.clone(),
+                deposit_tracking_hold_account.to_account_info(),
+                receiving_shares_account.to_account_info(),
+                shares_mint.to_account_info(),
+                vault.clone(),
+            ],
         )?;
 
         let sighash_arr = sighash("global", "withdraw_raydium_vault");
@@ -214,7 +203,7 @@ pub mod adapter_tulip {
 
         let mut withdraw_raydium_data = vec![];
         withdraw_raydium_data.append(&mut sighash_arr.try_to_vec()?);
-        withdraw_raydium_data.append(&mut amount.try_to_vec()?);
+        withdraw_raydium_data.append(&mut input_struct.share_amount.try_to_vec()?);
 
         let withdraw_raydium_ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -231,16 +220,17 @@ pub mod adapter_tulip {
         let lp_token_amount_after = lp_token_account.amount;
         let lp_amount = lp_token_amount_after - lp_token_amount_before;
 
-        msg!("lp_amount: {}", lp_amount.to_string());
-
-        // Return Result
-        let result = WithdrawResultWrapper {
+        // Wrap Output
+        let output_struct = WithdrawOutputWrapper {
             lp_amount,
+            ..Default::default()
         };
-        let mut buffer: Vec<u8> = Vec::new();
-        result.serialize(&mut buffer).unwrap();
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
 
-        anchor_lang::solana_program::program::set_return_data(&buffer);
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
@@ -270,15 +260,30 @@ pub mod adapter_tulip {
             ctx.accounts.common_data.platform_information.key(),
             ctx.accounts.common_data.platform_config_data.key(),
             ctx.accounts.common_data.lending_program.key(),
-            ctx.accounts.common_data.multi_burning_shares_token_account.key(),
-            ctx.accounts.common_data.withdraw_burning_shares_token_account.key(),
-            ctx.accounts.common_data.receiving_underlying_token_account.key(),
-            ctx.accounts.common_data.multi_underlying_withdraw_queue.key(),
+            ctx.accounts
+                .common_data
+                .multi_burning_shares_token_account
+                .key(),
+            ctx.accounts
+                .common_data
+                .withdraw_burning_shares_token_account
+                .key(),
+            ctx.accounts
+                .common_data
+                .receiving_underlying_token_account
+                .key(),
+            ctx.accounts
+                .common_data
+                .multi_underlying_withdraw_queue
+                .key(),
             ctx.accounts.common_data.multi_shares_mint.key(),
             ctx.accounts.common_data.withdraw_shares_mint.key(),
-            ctx.accounts.common_data.withdraw_vault_underlying_deposit_queue.key(),
+            ctx.accounts
+                .common_data
+                .withdraw_vault_underlying_deposit_queue
+                .key(),
             amount,
-            standalone_vault_accounts.clone()
+            standalone_vault_accounts.clone(),
         );
         anchor_lang::solana_program::program::invoke(
             &ix,
@@ -291,13 +296,31 @@ pub mod adapter_tulip {
                 ctx.accounts.common_data.platform_information.clone(),
                 ctx.accounts.common_data.platform_config_data.clone(),
                 ctx.accounts.common_data.lending_program.clone(),
-                ctx.accounts.common_data.multi_burning_shares_token_account.to_account_info(),
-                ctx.accounts.common_data.withdraw_burning_shares_token_account.to_account_info(),
-                ctx.accounts.common_data.receiving_underlying_token_account.to_account_info(),
-                ctx.accounts.common_data.multi_underlying_withdraw_queue.to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .multi_burning_shares_token_account
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .withdraw_burning_shares_token_account
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .receiving_underlying_token_account
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .multi_underlying_withdraw_queue
+                    .to_account_info(),
                 ctx.accounts.common_data.multi_shares_mint.to_account_info(),
-                ctx.accounts.common_data.withdraw_shares_mint.to_account_info(),
-                ctx.accounts.common_data.withdraw_vault_underlying_deposit_queue.to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .withdraw_shares_mint
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .withdraw_vault_underlying_deposit_queue
+                    .to_account_info(),
                 ctx.accounts.mango_group_account.clone(),
                 ctx.accounts.withdraw_vault_mango_account.clone(),
                 ctx.accounts.mango_cache.clone(),
@@ -335,15 +358,30 @@ pub mod adapter_tulip {
             ctx.accounts.common_data.platform_information.key(),
             ctx.accounts.common_data.platform_config_data.key(),
             ctx.accounts.common_data.lending_program.key(),
-            ctx.accounts.common_data.multi_burning_shares_token_account.key(),
-            ctx.accounts.common_data.withdraw_burning_shares_token_account.key(),
-            ctx.accounts.common_data.receiving_underlying_token_account.key(),
-            ctx.accounts.common_data.multi_underlying_withdraw_queue.key(),
+            ctx.accounts
+                .common_data
+                .multi_burning_shares_token_account
+                .key(),
+            ctx.accounts
+                .common_data
+                .withdraw_burning_shares_token_account
+                .key(),
+            ctx.accounts
+                .common_data
+                .receiving_underlying_token_account
+                .key(),
+            ctx.accounts
+                .common_data
+                .multi_underlying_withdraw_queue
+                .key(),
             ctx.accounts.common_data.multi_shares_mint.key(),
             ctx.accounts.common_data.withdraw_shares_mint.key(),
-            ctx.accounts.common_data.withdraw_vault_underlying_deposit_queue.key(),
+            ctx.accounts
+                .common_data
+                .withdraw_vault_underlying_deposit_queue
+                .key(),
             amount,
-            standalone_vault_accounts.clone()
+            standalone_vault_accounts.clone(),
         );
         anchor_lang::solana_program::program::invoke(
             &ix,
@@ -356,13 +394,31 @@ pub mod adapter_tulip {
                 ctx.accounts.common_data.platform_information.clone(),
                 ctx.accounts.common_data.platform_config_data.clone(),
                 ctx.accounts.common_data.lending_program.clone(),
-                ctx.accounts.common_data.multi_burning_shares_token_account.to_account_info(),
-                ctx.accounts.common_data.withdraw_burning_shares_token_account.to_account_info(),
-                ctx.accounts.common_data.receiving_underlying_token_account.to_account_info(),
-                ctx.accounts.common_data.multi_underlying_withdraw_queue.to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .multi_burning_shares_token_account
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .withdraw_burning_shares_token_account
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .receiving_underlying_token_account
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .multi_underlying_withdraw_queue
+                    .to_account_info(),
                 ctx.accounts.common_data.multi_shares_mint.to_account_info(),
-                ctx.accounts.common_data.withdraw_shares_mint.to_account_info(),
-                ctx.accounts.common_data.withdraw_vault_underlying_deposit_queue.to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .withdraw_shares_mint
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .withdraw_vault_underlying_deposit_queue
+                    .to_account_info(),
                 ctx.accounts.reserve_account.clone(),
                 ctx.accounts.reserve_liquidity_supply.to_account_info(),
                 ctx.accounts.reserve_collateral_mint.to_account_info(),
@@ -398,15 +454,30 @@ pub mod adapter_tulip {
             ctx.accounts.common_data.platform_information.key(),
             ctx.accounts.common_data.platform_config_data.key(),
             ctx.accounts.common_data.lending_program.key(),
-            ctx.accounts.common_data.multi_burning_shares_token_account.key(),
-            ctx.accounts.common_data.withdraw_burning_shares_token_account.key(),
-            ctx.accounts.common_data.receiving_underlying_token_account.key(),
-            ctx.accounts.common_data.multi_underlying_withdraw_queue.key(),
+            ctx.accounts
+                .common_data
+                .multi_burning_shares_token_account
+                .key(),
+            ctx.accounts
+                .common_data
+                .withdraw_burning_shares_token_account
+                .key(),
+            ctx.accounts
+                .common_data
+                .receiving_underlying_token_account
+                .key(),
+            ctx.accounts
+                .common_data
+                .multi_underlying_withdraw_queue
+                .key(),
             ctx.accounts.common_data.multi_shares_mint.key(),
             ctx.accounts.common_data.withdraw_shares_mint.key(),
-            ctx.accounts.common_data.withdraw_vault_underlying_deposit_queue.key(),
+            ctx.accounts
+                .common_data
+                .withdraw_vault_underlying_deposit_queue
+                .key(),
             amount,
-            standalone_vault_accounts.clone()
+            standalone_vault_accounts.clone(),
         );
         anchor_lang::solana_program::program::invoke(
             &ix,
@@ -419,13 +490,31 @@ pub mod adapter_tulip {
                 ctx.accounts.common_data.platform_information.clone(),
                 ctx.accounts.common_data.platform_config_data.clone(),
                 ctx.accounts.common_data.lending_program.clone(),
-                ctx.accounts.common_data.multi_burning_shares_token_account.to_account_info(),
-                ctx.accounts.common_data.withdraw_burning_shares_token_account.to_account_info(),
-                ctx.accounts.common_data.receiving_underlying_token_account.to_account_info(),
-                ctx.accounts.common_data.multi_underlying_withdraw_queue.to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .multi_burning_shares_token_account
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .withdraw_burning_shares_token_account
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .receiving_underlying_token_account
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .multi_underlying_withdraw_queue
+                    .to_account_info(),
                 ctx.accounts.common_data.multi_shares_mint.to_account_info(),
-                ctx.accounts.common_data.withdraw_shares_mint.to_account_info(),
-                ctx.accounts.common_data.withdraw_vault_underlying_deposit_queue.to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .withdraw_shares_mint
+                    .to_account_info(),
+                ctx.accounts
+                    .common_data
+                    .withdraw_vault_underlying_deposit_queue
+                    .to_account_info(),
                 ctx.accounts.reserve_account.clone(),
                 ctx.accounts.reserve_liquidity_supply.to_account_info(),
                 ctx.accounts.reserve_collateral_mint.to_account_info(),
@@ -440,17 +529,19 @@ pub mod adapter_tulip {
 
     pub fn supply<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        let supply_ix: u8 = 4; // DepositReserveLiquidity
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = SupplyInputWrapper::deserialize(&mut input_bytes)?;
 
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
-        let current_index = gateway_state.current_index;
+        msg!("Input: {:?}", input_struct);
 
-        // Get the data from payload queue
-        let supply_amount = gateway_state.payload_queue[current_index as usize];
-
-        msg!("supply_amount: {}", supply_amount.to_string());
+        // Use remaining accounts
+        let reserve_token_account_info = ctx.remaining_accounts[1].clone();
+        let mut reserve_token_account =
+            Account::<TokenAccount>::try_from(&reserve_token_account_info)?;
+        let reserve_token_amount_before = reserve_token_account.amount;
 
         let add_supply_accounts = vec![
             AccountMeta::new(ctx.remaining_accounts[0].key(), false),
@@ -466,36 +557,62 @@ pub mod adapter_tulip {
         ];
 
         let mut add_supply_data = vec![];
-        add_supply_data.append(&mut supply_ix.try_to_vec()?);
-        add_supply_data.append(&mut supply_amount.try_to_vec()?);
+        const SUPPLY_IX: u8 = 4; // DepositReserveLiquidity
+        add_supply_data.append(&mut SUPPLY_IX.try_to_vec()?);
+        add_supply_data.append(&mut input_struct.supply_amount.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
-            accounts: add_supply_accounts, 
-            data: add_supply_data
+            accounts: add_supply_accounts,
+            data: add_supply_data,
         };
 
-        invoke(
-            &ix, 
-            ctx.remaining_accounts
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
+
+        reserve_token_account.reload()?;
+        let reserve_token_amount_after = reserve_token_account.amount;
+        let reserved_amount = reserve_token_amount_after - reserve_token_amount_before;
+
+        // Wrap Output
+        let output_struct = SupplyOutputWrapper {
+            reserved_amount,
+            ..Default::default()
+        };
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
 
     pub fn unsupply<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        let unsupply_ix: u8 = 5; // RedeemReserveCollateral
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = UnsupplyInputWrapper::deserialize(&mut input_bytes)?;
 
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
-        let current_index = gateway_state.current_index;
+        msg!("Input: {:?}", input_struct);
 
-        // Get the data from payload queue
-        let unsupply_amount = gateway_state.payload_queue[current_index as usize];
+        // Use remaining accounts
+        let supply_token_account_info = ctx.remaining_accounts[1].clone();
+        let mut supply_token_account =
+            Account::<TokenAccount>::try_from(&supply_token_account_info)?;
+        let supply_token_amount_before = supply_token_account.amount;
 
-        msg!("unsupply_amount: {}", unsupply_amount.to_string());
+        let reserved_token_account_info = ctx.remaining_accounts[0].clone();
+        let reserved_token_account =
+            Account::<TokenAccount>::try_from(&reserved_token_account_info)?;
+        let reserved_token_amount = reserved_token_account.amount;
+
+        let unsupply_amount = match reserved_token_amount >= input_struct.reserved_amount {
+            true => input_struct.reserved_amount,
+            false => reserved_token_amount,
+        };
 
         let remove_supply_accounts = vec![
             AccountMeta::new(ctx.remaining_accounts[0].key(), false),
@@ -511,19 +628,34 @@ pub mod adapter_tulip {
         ];
 
         let mut remove_supply_data = vec![];
-        remove_supply_data.append(&mut unsupply_ix.try_to_vec()?);
+        const UNSUPPLY_IX: u8 = 5; // RedeemReserveCollateral
+        remove_supply_data.append(&mut UNSUPPLY_IX.try_to_vec()?);
         remove_supply_data.append(&mut unsupply_amount.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
-            accounts: remove_supply_accounts, 
-            data: remove_supply_data
+            accounts: remove_supply_accounts,
+            data: remove_supply_data,
         };
 
-        invoke(
-            &ix, 
-            ctx.remaining_accounts
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
+
+        supply_token_account.reload()?;
+
+        let supply_token_amount_after = supply_token_account.amount;
+        let unsupply_amount = supply_token_amount_after - supply_token_amount_before;
+
+        // Wrap Output
+        let output_struct = UnsupplyOutputWrapper {
+            unsupply_amount,
+            ..Default::default()
+        };
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
@@ -561,7 +693,6 @@ pub struct RegisterDepositTrackingAccount<'info> {
     /// CHECK: Safe
     pub vault_program: AccountInfo<'info>,
 }
-
 
 #[derive(Accounts)]
 pub struct IssueShares<'info> {
@@ -623,7 +754,7 @@ pub struct WithdrawDepositTrackingAccount<'info> {
     /// these shares are no longer being tracked by the deposit tracking
     /// account, and any newly accrued rewards tracked by the deposit tracking
     /// account will reflect the remaining balance that hasn't been withdrawn
-    /// 
+    ///
     /// **the shares that are being withdrawn still accrue rewards the same as shares that are held by the deposit tracking account**
     pub receiving_shares_account: Box<Account<'info, TokenAccount>>,
     /// CHECK: Safe
@@ -664,7 +795,7 @@ pub struct WithdrawMultiDepositOptimizerVault<'info> {
     pub multi_burning_shares_token_account: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     /// this is the account owned by the multi vault pda that holds the tokenized
-    /// shares issued by the withdraw vault. 
+    /// shares issued by the withdraw vault.
     pub withdraw_burning_shares_token_account: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     /// this is the account owned by the authority which will receive the underlying
@@ -757,12 +888,6 @@ pub struct WithdrawTulipMultiDepositOptimizerVault<'info> {
 }
 
 #[derive(Accounts)]
-pub struct WithdrawRaydium<'info> {
-    /// CHECK: Safe
-    pub vault_program: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
 pub struct Action<'info> {
     pub gateway_authority: Signer<'info>,
     /// CHECK: Safe
@@ -771,39 +896,113 @@ pub struct Action<'info> {
     pub base_program_id: AccountInfo<'info>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub struct GatewayStateWrapper {
-    pub discriminator: u64,
-    pub user_key: Pubkey,
-    pub random_seed: u64,
-    pub version: u8,
-    pub current_index: u8, // Start from 0
-    pub queue_size: u8,
-
-    // Queues
-    pub protocol_queue: [u8; 8],
-    pub action_queue: [u8; 8],
-    pub version_queue: [u8; 8],
-    pub payload_queue: [u64; 8],
-
-    // Extra metadata
-    pub swap_min_out_amount: u64,
-    pub pool_direction: u8,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub struct DepositResultWrapper {
-    pub share_amount: u64,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub struct WithdrawResultWrapper {
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct DepositInputWrapper {
     pub lp_amount: u64,
 }
 
-fn get_gateway_state(gateway_state_info: &AccountInfo) -> GatewayStateWrapper {
-    let mut gateway_state_data = &**gateway_state_info.try_borrow_data().unwrap();
-    GatewayStateWrapper::deserialize(&mut gateway_state_data).unwrap()
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct WithdrawInputWrapper {
+    pub share_amount: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct SupplyInputWrapper {
+    pub supply_amount: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct UnsupplyInputWrapper {
+    pub reserved_amount: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct DepositOutputWrapper {
+    pub share_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct WithdrawOutputWrapper {
+    pub lp_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct SupplyOutputWrapper {
+    pub reserved_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct UnsupplyOutputWrapper {
+    pub unsupply_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+pub type DepositOutputTuple = (u64, u64, u64, u64);
+pub type WithdrawOutputTuple = (u64, u64, u64, u64);
+pub type SupplyOutputTuple = (u64, u64, u64, u64);
+pub type UnsupplyOutputTuple = (u64, u64, u64, u64);
+
+impl From<DepositOutputWrapper> for DepositOutputTuple {
+    fn from(result: DepositOutputWrapper) -> DepositOutputTuple {
+        let DepositOutputWrapper {
+            share_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (share_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<WithdrawOutputWrapper> for WithdrawOutputTuple {
+    fn from(result: WithdrawOutputWrapper) -> WithdrawOutputTuple {
+        let WithdrawOutputWrapper {
+            lp_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (lp_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<SupplyOutputWrapper> for SupplyOutputTuple {
+    fn from(result: SupplyOutputWrapper) -> SupplyOutputTuple {
+        let SupplyOutputWrapper {
+            reserved_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (reserved_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<UnsupplyOutputWrapper> for UnsupplyOutputTuple {
+    fn from(result: UnsupplyOutputWrapper) -> UnsupplyOutputTuple {
+        let UnsupplyOutputWrapper {
+            unsupply_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (unsupply_amount, dummy_2, dummy_3, dummy_4)
+    }
 }
 
 pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
