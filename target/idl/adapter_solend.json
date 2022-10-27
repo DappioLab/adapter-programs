@@ -21,7 +21,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unsupply",
@@ -42,7 +47,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "borrow",
@@ -63,7 +73,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "repay",
@@ -84,82 +99,155 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
     {
-      "name": "GatewayStateWrapper",
+      "name": "SupplyInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
+            "name": "supplyAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnsupplyInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reservedAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BorrowInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "borrowAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RepayInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "repayAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SupplyOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reservedAmount",
             "type": "u64"
           },
           {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
+            "name": "dummy2",
             "type": "u64"
           },
           {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
+            "name": "dummy3",
             "type": "u64"
           },
           {
-            "name": "poolDirection",
-            "type": "u8"
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnsupplyOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "unsupplyAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BorrowOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "borrowAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RepayOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "repayAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
           }
         ]
       }

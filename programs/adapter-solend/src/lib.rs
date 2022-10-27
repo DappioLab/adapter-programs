@@ -4,6 +4,7 @@ use anchor_lang::solana_program::{
     program::invoke,
     pubkey::Pubkey,
 };
+use anchor_spl::token::TokenAccount;
 
 declare_id!("ADPTCXAFfJFVqcw73B4PWRZQjMNo7Q3Yj4g7p4zTiZnQ");
 
@@ -13,18 +14,19 @@ pub mod adapter_solend {
 
     pub fn supply<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        let supply_ix: u8 = 14; // DepositReserveLiquidity and DepositObligationCollateral
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = SupplyInputWrapper::deserialize(&mut input_bytes)?;
 
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
+        msg!("Input: {:?}", input_struct);
 
-        let current_index = gateway_state.current_index;
-
-        // Get the data from payload queue
-        let supply_amount = gateway_state.payload_queue[current_index as usize];
-
-        msg!("supply_amount: {}", supply_amount.to_string());
+        // Use remaining accounts
+        let reserved_token_account_info = ctx.remaining_accounts[7].clone();
+        let mut reserved_token_account =
+            Account::<TokenAccount>::try_from(&reserved_token_account_info)?;
+        let reserved_token_amount_before = reserved_token_account.amount;
 
         let add_supply_accounts = vec![
             AccountMeta::new(ctx.remaining_accounts[0].key(), false),
@@ -45,37 +47,56 @@ pub mod adapter_solend {
         ];
 
         let mut add_supply_data = vec![];
-        add_supply_data.append(&mut supply_ix.try_to_vec()?);
-        add_supply_data.append(&mut supply_amount.try_to_vec()?);
+        const SUPPLY_IX: u8 = 14; // DepositReserveLiquidity and DepositObligationCollateral
+        add_supply_data.append(&mut SUPPLY_IX.try_to_vec()?);
+        add_supply_data.append(&mut input_struct.supply_amount.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
-            accounts: add_supply_accounts, 
-            data: add_supply_data
+            accounts: add_supply_accounts,
+            data: add_supply_data,
         };
 
-        invoke(
-            &ix, 
-            ctx.remaining_accounts
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
+
+        reserved_token_account.reload()?;
+
+        let reserved_token_amount_after = reserved_token_account.amount;
+        let reserved_amount = reserved_token_amount_after - reserved_token_amount_before;
+
+        msg!("out_amount: {}", reserved_amount.to_string());
+
+        // Return Result
+        let output_struct = SupplyOutputWrapper {
+            reserved_amount,
+            ..Default::default()
+        };
+
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
 
     pub fn unsupply<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        let unsupply_ix: u8 = 15; // WithdrawObligationCollateral and RedeemReserveCollateral
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = UnsupplyInputWrapper::deserialize(&mut input_bytes)?;
 
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
+        msg!("Input: {:?}", input_struct);
 
-        let current_index = gateway_state.current_index;
-
-        // Get the data from payload queue
-        let unsupply_amount = gateway_state.payload_queue[current_index as usize];
-
-        msg!("unsupply_amount: {}", unsupply_amount.to_string());
+        // Use remaining accounts
+        let unsupply_token_account_info = ctx.remaining_accounts[6].clone();
+        let mut unsupply_token_account =
+            Account::<TokenAccount>::try_from(&unsupply_token_account_info)?;
+        let unsupply_token_amount_before = unsupply_token_account.amount;
 
         let remove_supply_accounts = vec![
             AccountMeta::new(ctx.remaining_accounts[0].key(), false),
@@ -94,36 +115,54 @@ pub mod adapter_solend {
         ];
 
         let mut remove_supply_data = vec![];
-        remove_supply_data.append(&mut unsupply_ix.try_to_vec()?);
-        remove_supply_data.append(&mut unsupply_amount.try_to_vec()?);
+        const UNSUPPLY_IX: u8 = 15; // WithdrawObligationCollateral and RedeemReserveCollateral
+        remove_supply_data.append(&mut UNSUPPLY_IX.try_to_vec()?);
+        remove_supply_data.append(&mut input_struct.reserved_amount.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
-            accounts: remove_supply_accounts, 
-            data: remove_supply_data
+            accounts: remove_supply_accounts,
+            data: remove_supply_data,
         };
 
-        invoke(
-            &ix, 
-            ctx.remaining_accounts
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
+
+        unsupply_token_account.reload()?;
+
+        let unsupply_token_amount_after = unsupply_token_account.amount;
+        let unsupply_amount = unsupply_token_amount_after - unsupply_token_amount_before;
+
+        // Return Result
+        let output_struct = UnsupplyOutputWrapper {
+            unsupply_amount,
+            ..Default::default()
+        };
+
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
 
     pub fn borrow<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        let borrow_ix: u8 = 10; // BorrowObligationLiquidity
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = BorrowInputWrapper::deserialize(&mut input_bytes)?;
 
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
-        let current_index = gateway_state.current_index;
+        msg!("Input: {:?}", input_struct);
 
-        // Get the data from payload queue
-        let borrow_amount = gateway_state.payload_queue[current_index as usize];
-
-        msg!("borrow_amount: {}", borrow_amount.to_string());
+        // Use remaining accounts
+        let borrow_token_account_info = ctx.remaining_accounts[1].clone();
+        let mut borrow_token_account =
+            Account::<TokenAccount>::try_from(&borrow_token_account_info)?;
+        let borrow_token_amount_before = borrow_token_account.amount;
 
         let borrow_accounts = vec![
             AccountMeta::new(ctx.remaining_accounts[0].key(), false),
@@ -139,36 +178,53 @@ pub mod adapter_solend {
         ];
 
         let mut borrow_data = vec![];
-        borrow_data.append(&mut borrow_ix.try_to_vec()?);
-        borrow_data.append(&mut borrow_amount.try_to_vec()?);
+        const BORROW_IX: u8 = 10; // BorrowObligationLiquidity
+        borrow_data.append(&mut BORROW_IX.try_to_vec()?);
+        borrow_data.append(&mut input_struct.borrow_amount.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
-            accounts: borrow_accounts, 
-            data: borrow_data
+            accounts: borrow_accounts,
+            data: borrow_data,
         };
 
-        invoke(
-            &ix, 
-            ctx.remaining_accounts
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
+
+        borrow_token_account.reload()?;
+
+        let borrow_token_amount_after = borrow_token_account.amount;
+        let borrow_amount = borrow_token_amount_after - borrow_token_amount_before;
+
+        // Return Result
+        let output_struct = BorrowOutputWrapper {
+            borrow_amount,
+            ..Default::default()
+        };
+
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
 
     pub fn repay<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
+        input: Vec<u8>,
     ) -> Result<()> {
-        let repay_ix: u8 = 11; // RepayObligationLiquidity
+        // Get Input
+        let mut input_bytes = &input[..];
+        let input_struct = RepayInputWrapper::deserialize(&mut input_bytes)?;
 
-        // Deserialize gateway_state
-        let gateway_state = get_gateway_state(&ctx.accounts.gateway_state_info);
-        let current_index = gateway_state.current_index;
+        msg!("Input: {:?}", input_struct);
 
-        // Get the data from payload queue
-        let repay_amount = gateway_state.payload_queue[current_index as usize];
-
-        msg!("repay_amount: {}", repay_amount.to_string());
+        // Use remaining accounts
+        let repay_token_account_info = ctx.remaining_accounts[0].clone();
+        let mut repay_token_account = Account::<TokenAccount>::try_from(&repay_token_account_info)?;
+        let repay_token_amount_before = repay_token_account.amount;
 
         let repay_accounts = vec![
             AccountMeta::new(ctx.remaining_accounts[0].key(), false),
@@ -182,19 +238,35 @@ pub mod adapter_solend {
         ];
 
         let mut repay_data = vec![];
-        repay_data.append(&mut repay_ix.try_to_vec()?);
-        repay_data.append(&mut repay_amount.try_to_vec()?);
+        const REPAY_IX: u8 = 11; // RepayObligationLiquidity
+        repay_data.append(&mut REPAY_IX.try_to_vec()?);
+        repay_data.append(&mut input_struct.repay_amount.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
-            accounts: repay_accounts, 
-            data: repay_data
+            accounts: repay_accounts,
+            data: repay_data,
         };
 
-        invoke(
-            &ix, 
-            ctx.remaining_accounts
-        )?;
+        invoke(&ix, ctx.remaining_accounts)?;
+
+        repay_token_account.reload()?;
+
+        let repay_token_amount_after = repay_token_account.amount;
+        let repay_amount = repay_token_amount_before - repay_token_amount_after;
+
+        // Return Result
+        let output_struct = RepayOutputWrapper {
+            repay_amount,
+            ..Default::default()
+        };
+
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
+
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
@@ -209,27 +281,111 @@ pub struct Action<'info> {
     pub base_program_id: AccountInfo<'info>,
 }
 
-fn get_gateway_state(gateway_state_info: &AccountInfo) -> GatewayStateWrapper {
-    let mut gateway_state_data = &**gateway_state_info.try_borrow_data().unwrap();
-    GatewayStateWrapper::deserialize(&mut gateway_state_data).unwrap()
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct SupplyInputWrapper {
+    pub supply_amount: u64,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub struct GatewayStateWrapper {
-    pub discriminator: u64,
-    pub user_key: Pubkey,
-    pub random_seed: u64,
-    pub version: u8,
-    pub current_index: u8, // Start from 0
-    pub queue_size: u8,
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct UnsupplyInputWrapper {
+    pub reserved_amount: u64,
+}
 
-    // Queues
-    pub protocol_queue: [u8; 8],
-    pub action_queue: [u8; 8],
-    pub version_queue: [u8; 8],
-    pub payload_queue: [u64; 8],
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct BorrowInputWrapper {
+    pub borrow_amount: u64,
+}
 
-    // Extra metadata
-    pub swap_min_out_amount: u64,
-    pub pool_direction: u8,
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct RepayInputWrapper {
+    pub repay_amount: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct SupplyOutputWrapper {
+    pub reserved_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct UnsupplyOutputWrapper {
+    pub unsupply_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct BorrowOutputWrapper {
+    pub borrow_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+// OutputWrapper needs to take up all the space of 32 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
+pub struct RepayOutputWrapper {
+    pub repay_amount: u64,
+    pub dummy_2: u64,
+    pub dummy_3: u64,
+    pub dummy_4: u64,
+}
+
+pub type SupplyOutputTuple = (u64, u64, u64, u64);
+pub type UnsupplyOutputTuple = (u64, u64, u64, u64);
+pub type BorrowOutputTuple = (u64, u64, u64, u64);
+pub type RepayOutputTuple = (u64, u64, u64, u64);
+
+impl From<SupplyOutputWrapper> for SupplyOutputTuple {
+    fn from(result: SupplyOutputWrapper) -> SupplyOutputTuple {
+        let SupplyOutputWrapper {
+            reserved_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (reserved_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<UnsupplyOutputWrapper> for UnsupplyOutputTuple {
+    fn from(result: UnsupplyOutputWrapper) -> UnsupplyOutputTuple {
+        let UnsupplyOutputWrapper {
+            unsupply_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (unsupply_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<BorrowOutputWrapper> for BorrowOutputTuple {
+    fn from(result: BorrowOutputWrapper) -> BorrowOutputTuple {
+        let BorrowOutputWrapper {
+            borrow_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (borrow_amount, dummy_2, dummy_3, dummy_4)
+    }
+}
+
+impl From<RepayOutputWrapper> for RepayOutputTuple {
+    fn from(result: RepayOutputWrapper) -> RepayOutputTuple {
+        let RepayOutputWrapper {
+            repay_amount,
+            dummy_2,
+            dummy_3,
+            dummy_4,
+        } = result;
+        (repay_amount, dummy_2, dummy_3, dummy_4)
+    }
 }
