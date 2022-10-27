@@ -21,7 +21,12 @@ export type AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unlockNft",
@@ -42,7 +47,12 @@ export type AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "stakeProof",
@@ -63,7 +73,12 @@ export type AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unstakeProof",
@@ -84,7 +99,12 @@ export type AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "claim",
@@ -105,94 +125,176 @@ export type AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
     {
-      "name": "AddLiquidityResultWrapper",
+      "name": "LockNftInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "UnlockNftInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "StakeProofInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "lpAmount",
+            "name": "proveTokenAmount",
             "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "GatewayStateWrapper",
+      "name": "UnstakeProofInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
+            "name": "farmTokenAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "LockNftOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proveTokenAmount",
             "type": "u64"
           },
           {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
+            "name": "dummy2",
             "type": "u64"
           },
           {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
+            "name": "dummy3",
             "type": "u64"
           },
           {
-            "name": "poolDirection",
-            "type": "u8"
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnlockNftOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dummy1",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeProofOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "farmTokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnstakeProofOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proveTokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rewardTokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
           }
         ]
       }
@@ -235,7 +337,12 @@ export const IDL: AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unlockNft",
@@ -256,7 +363,12 @@ export const IDL: AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "stakeProof",
@@ -277,7 +389,12 @@ export const IDL: AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unstakeProof",
@@ -298,7 +415,12 @@ export const IDL: AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "claim",
@@ -319,94 +441,176 @@ export const IDL: AdapterNftFinance = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
     {
-      "name": "AddLiquidityResultWrapper",
+      "name": "LockNftInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "UnlockNftInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "StakeProofInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "lpAmount",
+            "name": "proveTokenAmount",
             "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "GatewayStateWrapper",
+      "name": "UnstakeProofInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
+            "name": "farmTokenAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "LockNftOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proveTokenAmount",
             "type": "u64"
           },
           {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
+            "name": "dummy2",
             "type": "u64"
           },
           {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
+            "name": "dummy3",
             "type": "u64"
           },
           {
-            "name": "poolDirection",
-            "type": "u8"
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnlockNftOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dummy1",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeProofOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "farmTokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnstakeProofOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proveTokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rewardTokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
           }
         ]
       }
