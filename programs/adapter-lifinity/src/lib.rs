@@ -266,9 +266,8 @@ pub mod adapter_lifinity {
             .unwrap();
 
         lp_token_account.reload()?;
-        let lp_out_amount = lp_token_account
-            .amount
-            .checked_sub(lp_token_amount_before)
+        let lp_out_amount = lp_token_amount_before
+            .checked_sub(lp_token_account.amount)
             .unwrap();
         // Wrap Output
         let output_struct = RemoveLiquidityOutputWrapper {
