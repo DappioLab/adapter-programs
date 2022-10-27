@@ -255,11 +255,15 @@ pub mod adapter_lifinity {
 
         coin_token_account.reload()?;
         let coin_token_amount_after = coin_token_account.amount;
-        coin_token_amount_after - coin_token_amount_before;
+        let coin_amount = coin_token_amount_after
+            .checked_sub(coin_token_amount_before)
+            .unwrap();
 
         pc_token_account.reload()?;
         let pc_token_amount_after = pc_token_account.amount;
-        pc_token_amount_after - pc_token_amount_before;
+        let pc_amount = pc_token_amount_after
+            .checked_sub(pc_token_amount_before)
+            .unwrap();
 
         lp_token_account.reload()?;
         let lp_out_amount = lp_token_account
@@ -268,8 +272,8 @@ pub mod adapter_lifinity {
             .unwrap();
         // Wrap Output
         let output_struct = RemoveLiquidityOutputWrapper {
-            token_a_amount: coin_token_amount_after,
-            token_b_amount: pc_token_amount_after,
+            token_a_amount: coin_amount,
+            token_b_amount: pc_amount,
             lp_amount: lp_out_amount,
             ..Default::default()
         };
