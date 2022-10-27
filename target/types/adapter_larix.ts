@@ -21,7 +21,12 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unsupply",
@@ -42,7 +47,12 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "borrow",
@@ -63,7 +73,12 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "repay",
@@ -84,7 +99,12 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "stake",
@@ -105,7 +125,12 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unstake",
@@ -126,7 +151,12 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "collateralize",
@@ -147,7 +177,12 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "uncollateralize",
@@ -168,7 +203,12 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "harvest",
@@ -189,7 +229,12 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "claimCollateralReward",
@@ -210,94 +255,346 @@ export type AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
     {
-      "name": "UnstakeResultWrapper",
+      "name": "SupplyInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "lpAmount",
+            "name": "tokenInAmount",
             "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "GatewayStateWrapper",
+      "name": "SupplyOutputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
+            "name": "reserveOutAmount",
             "type": "u64"
           },
           {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
+            "name": "supplyInAmount",
             "type": "u64"
           },
           {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
+            "name": "dummy3",
             "type": "u64"
           },
           {
-            "name": "poolDirection",
-            "type": "u8"
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnsupplyInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "UnsupplyOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "supplyOutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "reserveInAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BorrowInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "borrowAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BorrowOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenOutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RepayInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "repayAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RepayOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenInAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "StakeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveInAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnstakeInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveOutAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnstakeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveOutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CollateralizeInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "CollateralizeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveInAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UncollateralizeInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveOutAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UncollateralizeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveOutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HarvestInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "HarvestOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rewardAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimCollateralRewardInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "ClaimCollateralRewardOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rewardAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
           }
         ]
       }
@@ -335,7 +632,12 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unsupply",
@@ -356,7 +658,12 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "borrow",
@@ -377,7 +684,12 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "repay",
@@ -398,7 +710,12 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "stake",
@@ -419,7 +736,12 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "unstake",
@@ -440,7 +762,12 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "collateralize",
@@ -461,7 +788,12 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "uncollateralize",
@@ -482,7 +814,12 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "harvest",
@@ -503,7 +840,12 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "claimCollateralReward",
@@ -524,94 +866,346 @@ export const IDL: AdapterLarix = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
     {
-      "name": "UnstakeResultWrapper",
+      "name": "SupplyInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "lpAmount",
+            "name": "tokenInAmount",
             "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "GatewayStateWrapper",
+      "name": "SupplyOutputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
+            "name": "reserveOutAmount",
             "type": "u64"
           },
           {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
+            "name": "supplyInAmount",
             "type": "u64"
           },
           {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
+            "name": "dummy3",
             "type": "u64"
           },
           {
-            "name": "poolDirection",
-            "type": "u8"
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnsupplyInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "UnsupplyOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "supplyOutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "reserveInAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BorrowInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "borrowAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BorrowOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenOutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RepayInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "repayAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RepayOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenInAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "StakeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveInAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnstakeInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveOutAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnstakeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveOutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CollateralizeInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "CollateralizeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveInAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UncollateralizeInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveOutAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UncollateralizeOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserveOutAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HarvestInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "HarvestOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rewardAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimCollateralRewardInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "ClaimCollateralRewardOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rewardAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
           }
         ]
       }
