@@ -21,7 +21,12 @@ export type AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "initiateWithdrawal",
@@ -42,7 +47,12 @@ export type AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "cancelWithdrawal",
@@ -63,7 +73,12 @@ export type AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "cancelDeposit",
@@ -84,7 +99,12 @@ export type AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "finalizeWithdrawal",
@@ -105,7 +125,12 @@ export type AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "finalizeDeposit",
@@ -126,82 +151,207 @@ export type AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
     {
-      "name": "GatewayStateWrapper",
+      "name": "InitiateDepositInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
+            "name": "depositAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitiateWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "CancelWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "FinalizeDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "FinalizeWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "InitiateDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "depositAmount",
             "type": "u64"
           },
           {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
+            "name": "dummy2",
             "type": "u64"
           },
           {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
+            "name": "dummy3",
             "type": "u64"
           },
           {
-            "name": "poolDirection",
-            "type": "u8"
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitiateWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "withdrawAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "withdrawAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
           }
         ]
       }
@@ -239,7 +389,12 @@ export const IDL: AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "initiateWithdrawal",
@@ -260,7 +415,12 @@ export const IDL: AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "cancelWithdrawal",
@@ -281,7 +441,12 @@ export const IDL: AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "cancelDeposit",
@@ -302,7 +467,12 @@ export const IDL: AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "finalizeWithdrawal",
@@ -323,7 +493,12 @@ export const IDL: AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "finalizeDeposit",
@@ -344,82 +519,207 @@ export const IDL: AdapterFriktion = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
     {
-      "name": "GatewayStateWrapper",
+      "name": "InitiateDepositInputWrapper",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "discriminator",
+            "name": "depositAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitiateWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "CancelWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "FinalizeDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "FinalizeWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "InitiateDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "depositAmount",
             "type": "u64"
           },
           {
-            "name": "userKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "randomSeed",
+            "name": "dummy2",
             "type": "u64"
           },
           {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "currentIndex",
-            "type": "u8"
-          },
-          {
-            "name": "queueSize",
-            "type": "u8"
-          },
-          {
-            "name": "protocolQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "actionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "versionQueue",
-            "type": {
-              "array": [
-                "u8",
-                8
-              ]
-            }
-          },
-          {
-            "name": "payloadQueue",
-            "type": {
-              "array": [
-                "u64",
-                8
-              ]
-            }
-          },
-          {
-            "name": "swapMinOutAmount",
+            "name": "dummy3",
             "type": "u64"
           },
           {
-            "name": "poolDirection",
-            "type": "u8"
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitiateWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "withdrawAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "withdrawAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
           }
         ]
       }
