@@ -146,7 +146,7 @@ pub mod adapter_friktion {
         let mut share_token_account_and_balance =
             load_token_account_and_balance(ctx.remaining_accounts, 5);
 
-        let data = sighash("global", "claim_pending_withdrawal").to_vec();
+        let data = sighash("global", "cancel_pending_withdrawal").to_vec();
         let accounts = vec![
             AccountMeta::new(ctx.remaining_accounts[0].key(), true),
             AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
