@@ -320,7 +320,7 @@ pub struct InitiateWithdrawInputWrapper {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct CancelDepositInputWrapper {
-    share_amount: u64,
+    pub share_amount: u64,
 }
 
 
@@ -377,7 +377,7 @@ pub struct FinalizeWithdrawOutputWrapper {
 
 pub type InitiateDepositOutputTuple = (u64, u64, u64, u64);
 pub type InitiateWithdrawOutputTuple = (u64, u64, u64, u64);
-pub type CancelDepositOutputTuple = (u64, u64, u64, u64);\
+pub type CancelDepositOutputTuple = (u64, u64, u64, u64);
 pub type FinalizeDepositOutputTuple = (u64, u64, u64, u64);
 pub type FinalizeWithdrawOutputTuple = (u64, u64, u64, u64);
 
