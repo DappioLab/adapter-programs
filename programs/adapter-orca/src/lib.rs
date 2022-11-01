@@ -322,7 +322,7 @@ pub mod adapter_orca {
         let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
         let lp_token_amount_before = lp_token_account.amount;
 
-        let share_token_account_info = ctx.remaining_accounts[5].clone();
+        let share_token_account_info = ctx.remaining_accounts[4].clone();
         let mut share_token_account = Account::<TokenAccount>::try_from(&share_token_account_info)?;
         let share_token_amount_before = share_token_account.amount;
 
