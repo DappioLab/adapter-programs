@@ -62,27 +62,16 @@ pub mod adapter_genopets_staking {
         let mut input_bytes = &input[..];
         let input_struct = UnstakeInputWrapper::deserialize(&mut input_bytes)?;
 
-        let mut unstake_data = vec![]; // Instruction data
-        let mut unstake_accout_index_array: Vec<usize> = vec![]; // Remaining accounts
-        let mut unstake_token_account_index: usize = 0;
-        if input_struct.as_sgene {
-            unstake_data = sighash("global", "withdraw_as_sgene").to_vec();
-            unstake_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
-            unstake_token_account_index = 4;
-        } else {
-            unstake_data = sighash("global", "withdraw").to_vec();
-            unstake_data.push(0); // default False cuz it's deprecated
-            unstake_accout_index_array =
-                vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
-            unstake_token_account_index = 5;
-        }
+        let mut unstake_data = sighash("global", "withdraw").to_vec(); // Instruction data
+        unstake_data.push(0); // default False cuz it's deprecated
+        let unstake_accout_index_array: Vec<usize> =
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]; // Remaining accounts
 
         let unstake_ix_accounts =
             load_remaining_accounts(ctx.remaining_accounts, unstake_accout_index_array);
 
         let mut unstake_token_account_and_balance =
-            load_token_account_and_balance(ctx.remaining_accounts, unstake_token_account_index);
+            load_token_account_and_balance(ctx.remaining_accounts, 5);
 
         let unstake_ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -114,22 +103,42 @@ pub mod adapter_genopets_staking {
         let mut input_bytes = &input[..];
         let input_struct = HarvestInputWrapper::deserialize(&mut input_bytes)?;
 
-        let mut harvest_data = sighash("global", "claim_rewards").to_vec();
-        harvest_data.push(0);
-        let harvest_accounts = load_remaining_accounts(
-            ctx.remaining_accounts,
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        );
+        let mut harvest_data = vec![]; // Instruction data
+        let mut harvest_accout_index_array: Vec<usize> = vec![]; // Remaining accounts
+        let mut harvest_token_account_index: usize = 0;
+        if input_struct.as_sgene {
+            harvest_data = sighash("global", "withdraw_as_sgene").to_vec();
+            harvest_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            harvest_token_account_index = 4;
+        } else if ctx.remaining_accounts.len() == 18 {
+            harvest_data = sighash("global", "withdraw").to_vec();
+            harvest_data.push(0); // default False cuz it's deprecated
+            harvest_accout_index_array =
+                vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+            harvest_token_account_index = 5;
+        } else {
+            harvest_data = sighash("global", "claim_rewards").to_vec();
+            harvest_data.push(0); // default False cuz it's deprecated
+            harvest_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            harvest_token_account_index = 5;
+        }
+
+        let harvest_ix_accounts =
+            load_remaining_accounts(ctx.remaining_accounts, harvest_accout_index_array);
+
+        let mut harvest_token_account_and_balance =
+            load_token_account_and_balance(ctx.remaining_accounts, harvest_token_account_index);
 
         let harvest_ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
-            accounts: harvest_accounts,
+            accounts: harvest_ix_accounts,
             data: harvest_data,
         };
         invoke(&harvest_ix, ctx.remaining_accounts)?;
 
         // Wrap Output
         let output_struct = HarvestOutputWrapper {
+            reward_amount: harvest_token_account_and_balance.get_balance_change(),
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -166,9 +175,7 @@ pub struct StakeOutputWrapper {
     pub dummy_4: u64,
 }
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
-pub struct UnstakeInputWrapper {
-    pub as_sgene: bool,
-}
+pub struct UnstakeInputWrapper {}
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct UnstakeOutputWrapper {
     pub token_out_amount: u64,
@@ -178,10 +185,12 @@ pub struct UnstakeOutputWrapper {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
-pub struct HarvestInputWrapper {}
+pub struct HarvestInputWrapper {
+    pub as_sgene: bool,
+}
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct HarvestOutputWrapper {
-    pub dummy_1: u64,
+    pub reward_amount: u64,
     pub dummy_2: u64,
     pub dummy_3: u64,
     pub dummy_4: u64,
@@ -217,12 +226,12 @@ impl From<UnstakeOutputWrapper> for UnstakeOutputTuple {
 impl From<HarvestOutputWrapper> for HarvestOutputTuple {
     fn from(result: HarvestOutputWrapper) -> HarvestOutputTuple {
         let HarvestOutputWrapper {
-            dummy_1,
+            reward_amount,
             dummy_2,
             dummy_3,
             dummy_4,
         } = result;
-        (dummy_1, dummy_2, dummy_3, dummy_4)
+        (reward_amount, dummy_2, dummy_3, dummy_4)
     }
 }
 
