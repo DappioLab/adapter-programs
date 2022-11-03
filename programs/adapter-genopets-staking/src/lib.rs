@@ -23,7 +23,7 @@ pub mod adapter_genopets_staking {
         let mut stake_data = sighash("global", "stake").to_vec();
         stake_data.append(&mut input_struct.amount.to_le_bytes().to_vec());
         stake_data.append(&mut input_struct.lock_for_months.to_le_bytes().to_vec());
-        stake_data.append(&mut input_struct.as_sgene.try_to_vec()?);
+        stake_data.push(0); // default False cuz it's deprecated
 
         let stake_accounts = load_remaining_accounts(
             ctx.remaining_accounts,
@@ -162,7 +162,6 @@ pub struct Action<'info> {
 pub struct StakeInputWrapper {
     pub amount: u64,
     pub lock_for_months: u8,
-    pub as_sgene: bool,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
