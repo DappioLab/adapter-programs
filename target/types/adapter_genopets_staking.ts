@@ -130,12 +130,7 @@ export type AdapterGenopetsStaking = {
       "name": "UnstakeInputWrapper",
       "type": {
         "kind": "struct",
-        "fields": [
-          {
-            "name": "asSgene",
-            "type": "bool"
-          }
-        ]
+        "fields": []
       }
     },
     {
@@ -166,7 +161,12 @@ export type AdapterGenopetsStaking = {
       "name": "HarvestInputWrapper",
       "type": {
         "kind": "struct",
-        "fields": []
+        "fields": [
+          {
+            "name": "asSgene",
+            "type": "bool"
+          }
+        ]
       }
     },
     {
@@ -175,7 +175,7 @@ export type AdapterGenopetsStaking = {
         "kind": "struct",
         "fields": [
           {
-            "name": "dummy1",
+            "name": "rewardAmount",
             "type": "u64"
           },
           {
@@ -328,12 +328,7 @@ export const IDL: AdapterGenopetsStaking = {
       "name": "UnstakeInputWrapper",
       "type": {
         "kind": "struct",
-        "fields": [
-          {
-            "name": "asSgene",
-            "type": "bool"
-          }
-        ]
+        "fields": []
       }
     },
     {
@@ -364,7 +359,12 @@ export const IDL: AdapterGenopetsStaking = {
       "name": "HarvestInputWrapper",
       "type": {
         "kind": "struct",
-        "fields": []
+        "fields": [
+          {
+            "name": "asSgene",
+            "type": "bool"
+          }
+        ]
       }
     },
     {
@@ -373,7 +373,7 @@ export const IDL: AdapterGenopetsStaking = {
         "kind": "struct",
         "fields": [
           {
-            "name": "dummy1",
+            "name": "rewardAmount",
             "type": "u64"
           },
           {
