@@ -11,11 +11,6 @@
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -37,11 +32,6 @@
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -61,11 +51,6 @@
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",

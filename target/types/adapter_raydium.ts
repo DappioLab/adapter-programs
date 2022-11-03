@@ -11,11 +11,6 @@ export type AdapterRaydium = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -35,11 +30,6 @@ export type AdapterRaydium = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -63,11 +53,6 @@ export type AdapterRaydium = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -87,11 +72,6 @@ export type AdapterRaydium = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -115,11 +95,6 @@ export type AdapterRaydium = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -139,11 +114,6 @@ export type AdapterRaydium = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -938,11 +908,6 @@ export const IDL: AdapterRaydium = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -962,11 +927,6 @@ export const IDL: AdapterRaydium = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -990,11 +950,6 @@ export const IDL: AdapterRaydium = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -1014,11 +969,6 @@ export const IDL: AdapterRaydium = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -1042,11 +992,6 @@ export const IDL: AdapterRaydium = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -1066,11 +1011,6 @@ export const IDL: AdapterRaydium = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",

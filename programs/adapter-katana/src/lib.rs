@@ -267,9 +267,8 @@ pub mod adapter_katana {
 
 #[derive(Accounts)]
 pub struct Action<'info> {
+    // TODO: Add constraints
     pub gateway_authority: Signer<'info>,
-    /// CHECK: Safe
-    pub gateway_state_info: AccountInfo<'info>,
     /// CHECK: Safe
     pub base_program_id: AccountInfo<'info>,
 }
@@ -322,7 +321,6 @@ pub struct InitiateWithdrawInputWrapper {
 pub struct CancelDepositInputWrapper {
     pub share_amount: u64,
 }
-
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct FinalizeDepositInputWrapper {}
@@ -416,8 +414,6 @@ impl From<CancelDepositOutputWrapper> for CancelDepositOutputTuple {
         (withdraw_amount, dummy_2, dummy_3, dummy_4)
     }
 }
-
-
 
 impl From<FinalizeDepositOutputWrapper> for FinalizeDepositOutputTuple {
     fn from(result: FinalizeDepositOutputWrapper) -> FinalizeDepositOutputTuple {

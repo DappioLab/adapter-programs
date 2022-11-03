@@ -11,11 +11,6 @@ export type AdapterLifinity = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -37,11 +32,6 @@ export type AdapterLifinity = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -61,11 +51,6 @@ export type AdapterLifinity = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -267,11 +252,6 @@ export const IDL: AdapterLifinity = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -293,11 +273,6 @@ export const IDL: AdapterLifinity = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -317,11 +292,6 @@ export const IDL: AdapterLifinity = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",

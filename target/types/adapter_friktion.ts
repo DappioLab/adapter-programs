@@ -11,11 +11,6 @@ export type AdapterFriktion = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -35,11 +30,6 @@ export type AdapterFriktion = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -63,11 +53,6 @@ export type AdapterFriktion = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -87,11 +72,6 @@ export type AdapterFriktion = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -115,11 +95,6 @@ export type AdapterFriktion = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -139,11 +114,6 @@ export type AdapterFriktion = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -379,11 +349,6 @@ export const IDL: AdapterFriktion = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -403,11 +368,6 @@ export const IDL: AdapterFriktion = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -431,11 +391,6 @@ export const IDL: AdapterFriktion = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -455,11 +410,6 @@ export const IDL: AdapterFriktion = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -483,11 +433,6 @@ export const IDL: AdapterFriktion = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -507,11 +452,6 @@ export const IDL: AdapterFriktion = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
