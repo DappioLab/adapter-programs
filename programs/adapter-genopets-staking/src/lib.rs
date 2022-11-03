@@ -63,17 +63,18 @@ pub mod adapter_genopets_staking {
         let input_struct = UnstakeInputWrapper::deserialize(&mut input_bytes)?;
 
         let mut unstake_data = vec![]; // Instruction data
-        let mut unstake_accout_index_array: Vec<usize> = vec![]; // Remaining accounts 
+        let mut unstake_accout_index_array: Vec<usize> = vec![]; // Remaining accounts
         let mut unstake_token_account_index: usize = 0;
         if input_struct.as_sgene {
             unstake_data = sighash("global", "withdraw_as_sgene").to_vec();
-            unstake_accout_index_array =
-                vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+            unstake_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
             unstake_token_account_index = 4;
         } else {
             unstake_data = sighash("global", "withdraw").to_vec();
             unstake_data.push(0); // default False cuz it's deprecated
-            unstake_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            unstake_accout_index_array =
+                vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
             unstake_token_account_index = 5;
         }
 
@@ -113,8 +114,8 @@ pub mod adapter_genopets_staking {
         let mut input_bytes = &input[..];
         let input_struct = HarvestInputWrapper::deserialize(&mut input_bytes)?;
 
-        let harvest_data = sighash("global", "claim_rewards").to_vec();
-
+        let mut harvest_data = sighash("global", "claim_rewards").to_vec();
+        harvest_data.push(0);
         let harvest_accounts = load_remaining_accounts(
             ctx.remaining_accounts,
             vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
