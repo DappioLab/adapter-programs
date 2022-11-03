@@ -11,11 +11,6 @@ export type AdapterGenopetsStaking = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -37,11 +32,6 @@ export type AdapterGenopetsStaking = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -61,11 +51,6 @@ export type AdapterGenopetsStaking = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -94,10 +79,6 @@ export type AdapterGenopetsStaking = {
           {
             "name": "lockForMonths",
             "type": "u8"
-          },
-          {
-            "name": "asSgene",
-            "type": "bool"
           }
         ]
       }
@@ -209,11 +190,6 @@ export const IDL: AdapterGenopetsStaking = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -235,11 +211,6 @@ export const IDL: AdapterGenopetsStaking = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -259,11 +230,6 @@ export const IDL: AdapterGenopetsStaking = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
@@ -292,10 +258,6 @@ export const IDL: AdapterGenopetsStaking = {
           {
             "name": "lockForMonths",
             "type": "u8"
-          },
-          {
-            "name": "asSgene",
-            "type": "bool"
           }
         ]
       }
