@@ -106,21 +106,27 @@ pub mod adapter_genopets_staking {
         let mut harvest_data = vec![]; // Instruction data
         let mut harvest_accout_index_array: Vec<usize> = vec![]; // Remaining accounts
         let mut harvest_token_account_index: usize = 0;
-        if input_struct.as_sgene {
-            harvest_data = sighash("global", "withdraw_as_sgene").to_vec();
-            harvest_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-            harvest_token_account_index = 4;
-        } else if ctx.remaining_accounts.len() == 18 {
-            harvest_data = sighash("global", "withdraw").to_vec();
-            harvest_data.push(0); // default False cuz it's deprecated
-            harvest_accout_index_array =
-                vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
-            harvest_token_account_index = 5;
-        } else {
-            harvest_data = sighash("global", "claim_rewards").to_vec();
-            harvest_data.push(0); // default False cuz it's deprecated
-            harvest_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-            harvest_token_account_index = 5;
+        match input_struct.harvest_type {
+            0 => {
+                harvest_data = sighash("global", "claim_rewards").to_vec();
+                harvest_data.push(0); // default False cuz it's deprecated
+                harvest_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+                harvest_token_account_index = 5;
+            }
+            1 => {
+                harvest_data = sighash("global", "withdraw").to_vec();
+                harvest_data.push(0); // default False cuz it's deprecated
+                harvest_accout_index_array =
+                    vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+                harvest_token_account_index = 5;
+            }
+            2 => {
+                harvest_data = sighash("global", "withdraw_as_sgene").to_vec();
+                harvest_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+                harvest_token_account_index = 4;
+            }
+
+            _ => return Err(ErrorCode::UnsupportedAction.into()),
         }
 
         let harvest_ix_accounts =
@@ -157,7 +163,13 @@ pub struct Action<'info> {
     /// CHECK: Safe
     pub base_program_id: AccountInfo<'info>,
 }
-
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Unsupported PoolDirection")]
+    UnsupportedPoolDirection,
+    #[msg("Unsupported Action")]
+    UnsupportedAction,
+}
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct StakeInputWrapper {
     pub amount: u64,
@@ -183,7 +195,7 @@ pub struct UnstakeOutputWrapper {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct HarvestInputWrapper {
-    pub as_sgene: bool,
+    pub harvest_type: u8,
 }
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct HarvestOutputWrapper {
