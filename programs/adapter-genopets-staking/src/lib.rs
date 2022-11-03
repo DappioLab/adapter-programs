@@ -6,7 +6,7 @@ use anchor_lang::solana_program::{
     pubkey::Pubkey,
 };
 use anchor_spl::token::TokenAccount;
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("ADPTR3wPKDCZ8HNBBpY3GGXB8hu6DZDqyPJMimyHjKNk");
 
 #[program]
 pub mod adapter_genopets_staking {
