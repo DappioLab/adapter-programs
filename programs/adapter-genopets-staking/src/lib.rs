@@ -107,12 +107,15 @@ pub mod adapter_genopets_staking {
         let mut harvest_accout_index_array: Vec<usize> = vec![]; // Remaining accounts
         let mut harvest_token_account_index: usize = 0;
         match input_struct.harvest_type {
+            // the type index is to dispatch different type of harvest
+            // 0 is for claim rewards
             0 => {
                 harvest_data = sighash("global", "claim_rewards").to_vec();
                 harvest_data.push(0); // default False cuz it's deprecated
                 harvest_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
                 harvest_token_account_index = 5;
             }
+            // 0 is for withdraw rewards after the lockup period
             1 => {
                 harvest_data = sighash("global", "withdraw").to_vec();
                 harvest_data.push(0); // default False cuz it's deprecated
@@ -120,6 +123,7 @@ pub mod adapter_genopets_staking {
                     vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
                 harvest_token_account_index = 5;
             }
+            // 0 is for withdraw rewards as sGENE token during the lockup period
             2 => {
                 harvest_data = sighash("global", "withdraw_as_sgene").to_vec();
                 harvest_accout_index_array = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
