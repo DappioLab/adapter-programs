@@ -144,8 +144,8 @@ export type AdapterGenopetsStaking = {
         "kind": "struct",
         "fields": [
           {
-            "name": "asSgene",
-            "type": "bool"
+            "name": "harvestType",
+            "type": "u8"
           }
         ]
       }
@@ -173,6 +173,18 @@ export type AdapterGenopetsStaking = {
           }
         ]
       }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "UnsupportedPoolDirection",
+      "msg": "Unsupported PoolDirection"
+    },
+    {
+      "code": 6001,
+      "name": "UnsupportedAction",
+      "msg": "Unsupported Action"
     }
   ]
 };
@@ -323,8 +335,8 @@ export const IDL: AdapterGenopetsStaking = {
         "kind": "struct",
         "fields": [
           {
-            "name": "asSgene",
-            "type": "bool"
+            "name": "harvestType",
+            "type": "u8"
           }
         ]
       }
@@ -352,6 +364,18 @@ export const IDL: AdapterGenopetsStaking = {
           }
         ]
       }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "UnsupportedPoolDirection",
+      "msg": "Unsupported PoolDirection"
+    },
+    {
+      "code": 6001,
+      "name": "UnsupportedAction",
+      "msg": "Unsupported Action"
     }
   ]
 };
