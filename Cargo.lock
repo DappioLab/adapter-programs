@@ -35,6 +35,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "adapter-lido"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+]
+
+[[package]]
 name = "adapter-lifinity"
 version = "0.1.0"
 dependencies = [
