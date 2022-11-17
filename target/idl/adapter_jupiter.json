@@ -11,11 +11,6 @@
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false

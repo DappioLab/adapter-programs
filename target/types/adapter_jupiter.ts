@@ -11,11 +11,6 @@ export type AdapterJupiter = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
@@ -101,11 +96,6 @@ export const IDL: AdapterJupiter = {
           "name": "gatewayAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "baseProgramId",
