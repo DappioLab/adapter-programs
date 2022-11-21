@@ -43,15 +43,11 @@ export type AdapterJupiter = {
             "type": "u16"
           },
           {
-            "name": "platformFeeBps",
-            "type": "u8"
-          },
-          {
             "name": "swapConfig",
             "type": {
               "array": [
                 "u8",
-                13
+                14
               ]
             }
           }
@@ -130,15 +126,11 @@ export const IDL: AdapterJupiter = {
             "type": "u16"
           },
           {
-            "name": "platformFeeBps",
-            "type": "u8"
-          },
-          {
             "name": "swapConfig",
             "type": {
               "array": [
                 "u8",
-                13
+                14
               ]
             }
           }

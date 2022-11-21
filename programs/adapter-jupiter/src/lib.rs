@@ -13,6 +13,8 @@ declare_id!("ADPT8iF4A7BSUWQ8AsVwmcod2suFzA4bpYpJj7kUWK3E");
 pub mod adapter_jupiter {
     use super::*;
 
+    const PLATEFORM_FEE: u8 = 0;
+
     pub fn swap(ctx: Context<Action>, input: Vec<u8>) -> Result<()> {
         let discriminator: [u8; 8] = sighash("global", "route");
 
@@ -25,10 +27,11 @@ pub mod adapter_jupiter {
         let input_struct = SwapInputWrapper::deserialize(&mut input_bytes)?;
         msg!("Input: {:?}", input_struct);
 
-        let mut last_index: usize = 13;
-        for index in 0..input_struct.swap_config.len() {
-            if input_struct.swap_config[index] == 255 {
+        let mut last_index: usize = 14;
+        for index in input_struct.swap_config.len()..0 {
+            if input_struct.swap_config[index] != 0 {
                 last_index = index;
+                break;
             }
         }
 
@@ -40,7 +43,7 @@ pub mod adapter_jupiter {
         swap_data.append(&mut input_struct.in_amount.try_to_vec()?);
         swap_data.append(&mut input_struct.out_amount.try_to_vec()?);
         swap_data.append(&mut input_struct.slippage_bps.try_to_vec()?);
-        swap_data.append(&mut input_struct.platform_fee_bps.try_to_vec()?);
+        swap_data.append(&mut PLATEFORM_FEE.try_to_vec()?);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -77,8 +80,7 @@ pub struct SwapInputWrapper {
     pub in_amount: u64,
     pub out_amount: u64,
     pub slippage_bps: u16,
-    pub platform_fee_bps: u8,
-    pub swap_config: [u8; 13],
+    pub swap_config: [u8; 14],
 }
 
 // OutputWrapper needs to take up all the space of 32 bytes
