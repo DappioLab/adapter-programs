@@ -11,17 +11,17 @@ export type AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "initiateWithdrawal",
@@ -32,17 +32,17 @@ export type AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "finalizeDeposit",
@@ -53,17 +53,17 @@ export type AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "cancelDeposit",
@@ -74,17 +74,17 @@ export type AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "finalizeWithdrawal",
@@ -95,17 +95,17 @@ export type AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
@@ -184,6 +184,176 @@ export type AdapterKatana = {
           }
         ]
       }
+    },
+    {
+      "name": "InitiateDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "depositAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitiateWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "FinalizeWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "InitiateDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "depositAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitiateWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "withdrawAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "withdrawAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -208,17 +378,17 @@ export const IDL: AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "initiateWithdrawal",
@@ -229,17 +399,17 @@ export const IDL: AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "finalizeDeposit",
@@ -250,17 +420,17 @@ export const IDL: AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "cancelDeposit",
@@ -271,17 +441,17 @@ export const IDL: AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     },
     {
       "name": "finalizeWithdrawal",
@@ -292,17 +462,17 @@ export const IDL: AdapterKatana = {
           "isSigner": true
         },
         {
-          "name": "gatewayStateInfo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "baseProgramId",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "input",
+          "type": "bytes"
+        }
+      ]
     }
   ],
   "types": [
@@ -378,6 +548,176 @@ export const IDL: AdapterKatana = {
           {
             "name": "poolDirection",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitiateDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "depositAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitiateWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeDepositInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "FinalizeWithdrawInputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "InitiateDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "depositAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitiateWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "withdrawAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeDepositOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FinalizeWithdrawOutputWrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "withdrawAmount",
+            "type": "u64"
+          },
+          {
+            "name": "dummy2",
+            "type": "u64"
+          },
+          {
+            "name": "dummy3",
+            "type": "u64"
+          },
+          {
+            "name": "dummy4",
+            "type": "u64"
           }
         ]
       }

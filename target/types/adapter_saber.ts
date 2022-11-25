@@ -202,11 +202,11 @@ export type AdapterSaber = {
         "kind": "struct",
         "fields": [
           {
-            "name": "dummy1",
+            "name": "tokenAAmount",
             "type": "u64"
           },
           {
-            "name": "dummy2",
+            "name": "tokenBAmount",
             "type": "u64"
           },
           {
@@ -525,11 +525,11 @@ export const IDL: AdapterSaber = {
         "kind": "struct",
         "fields": [
           {
-            "name": "dummy1",
+            "name": "tokenAAmount",
             "type": "u64"
           },
           {
-            "name": "dummy2",
+            "name": "tokenBAmount",
             "type": "u64"
           },
           {

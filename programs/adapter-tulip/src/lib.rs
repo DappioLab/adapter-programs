@@ -889,9 +889,8 @@ pub struct WithdrawTulipMultiDepositOptimizerVault<'info> {
 
 #[derive(Accounts)]
 pub struct Action<'info> {
+    // TODO: Add constraints
     pub gateway_authority: Signer<'info>,
-    /// CHECK: Safe
-    pub gateway_state_info: AccountInfo<'info>,
     /// CHECK: Safe
     pub base_program_id: AccountInfo<'info>,
 }
