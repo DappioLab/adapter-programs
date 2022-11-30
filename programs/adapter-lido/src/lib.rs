@@ -70,17 +70,21 @@ pub mod adapter_lido {
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
         input: Vec<u8>,
     ) -> Result<()> {
-        msg!("Entered Withdraw function");
         // Get Input
         let mut input_bytes = &input[..];
         let input_struct = WithdrawInputWrapper::deserialize(&mut input_bytes)?;
 
+        let is_lido_v2 = ctx.remaining_accounts.len() == 13;
+
         msg!("Input: {:?}", input_struct);
+
+        let user_account = ctx.remaining_accounts[1].clone();
+        let account_balance = user_account.lamports();
         
-        let withdraw_accounts = if input_struct.instruction == 23 {
+        let withdraw_accounts = if is_lido_v2 {
             vec![
                 AccountMeta::new(ctx.remaining_accounts[0].key(), false),
-                AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), true),
+                AccountMeta::new_readonly(user_account.key(), true),
                 AccountMeta::new(ctx.remaining_accounts[2].key(), false),
                 AccountMeta::new(ctx.remaining_accounts[3].key(), false),
                 AccountMeta::new_readonly(ctx.remaining_accounts[4].key(), false),
@@ -96,7 +100,7 @@ pub mod adapter_lido {
         } else {
             vec![
                 AccountMeta::new(ctx.remaining_accounts[0].key(), false),
-                AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), true),
+                AccountMeta::new_readonly(user_account.key(), true),
                 AccountMeta::new(ctx.remaining_accounts[2].key(), false),
                 AccountMeta::new(ctx.remaining_accounts[3].key(), false),
                 AccountMeta::new_readonly(ctx.remaining_accounts[4].key(), false),
@@ -110,12 +114,32 @@ pub mod adapter_lido {
             ]
         };
 
-        let withdraw_ix = Instruction { program_id: ctx.accounts.base_program_id.key(), accounts: withdraw_accounts, data: input };
+        let first_byte: u8 = match is_lido_v2 {
+            true => 23,
+            false => 2
+        };
+
+        let mut data = vec![first_byte];
+        data.extend(input);
+
+        let withdraw_ix = Instruction { program_id: ctx.accounts.base_program_id.key(), accounts: withdraw_accounts, data };
         
         invoke(&withdraw_ix, ctx.remaining_accounts)?;    
         
-        let deactivate_ix = stake::instruction::deactivate_stake(&ctx.remaining_accounts[1].key(), &ctx.remaining_accounts[6].key());
-        invoke(&deactivate_ix, &vec![ctx.remaining_accounts[1].clone()])?;    
+        let deactivate_ix = stake::instruction::deactivate_stake(&user_account.key(), &ctx.remaining_accounts[6].key());
+        invoke(&deactivate_ix, &vec![user_account.clone()])?;    
+
+        let lp_amount = user_account.lamports().checked_sub(account_balance).unwrap();
+
+        // Wrap Output
+        let output_struct = WithdrawOutputWrapper {
+            lp_amount,
+            ..Default::default()
+        };
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
+
+        anchor_lang::solana_program::program::set_return_data(&output);
 
         Ok(())
     }
@@ -138,8 +162,6 @@ pub struct DepositInputWrapper {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct WithdrawInputWrapper {
-    /// The instuction to withdraw. This is either a 2 (for v1) or 23 (v2).
-    pub instruction: u8,
     /// Amount to withdraw.
     pub amount: u64,
     /// Index of the Heaviest Validator. Unused in Lido v1.
@@ -166,8 +188,6 @@ pub struct WithdrawOutputWrapper {
 
 pub type DepositOutputTuple = (u64, u64, u64, u64);
 pub type WithdrawOutputTuple = (u64, u64, u64, u64);
-pub type SupplyOutputTuple = (u64, u64, u64, u64);
-pub type UnsupplyOutputTuple = (u64, u64, u64, u64);
 
 impl From<DepositOutputWrapper> for DepositOutputTuple {
     fn from(result: DepositOutputWrapper) -> DepositOutputTuple {
