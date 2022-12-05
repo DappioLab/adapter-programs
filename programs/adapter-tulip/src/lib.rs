@@ -5,30 +5,14 @@ use anchor_lang::solana_program::{
     program::invoke,
     pubkey::Pubkey,
 };
-use anchor_spl::token::{Mint, TokenAccount};
+use anchor_spl::token::TokenAccount;
 
-pub mod common;
-pub mod farms;
-pub mod vaults;
-use crate::vaults::accounts::vault_base::VaultBaseV1;
-use crate::vaults::instructions::{
-    new_issue_shares_ix, new_withdraw_deposit_tracking_ix,
-    new_withdraw_multi_deposit_optimizer_vault_ix,
-};
-
-declare_id!("ADPT9nhC1asRcEB13FKymLTatqWGCuZHDznGgnakWKxW");
+declare_id!("iFdAXmNn1JrKVNeC53eDPQ82TDB8e2MaK1a8VzY6YLB");
 
 #[program]
 pub mod adapter_tulip {
     use super::*;
 
-    /// deposits `amount` of the underlying tokens in exchange for a corresponding
-    /// amount of shares. these shares are locked within the deposit tracking account
-    /// for 15 minutes, after which they can be removed from the deposit tracking account
-    /// if desired. generaly speaking this should only be done if you want to
-    /// use the tokenized shares elsewhere (ie friktion volts), otherwise
-    /// its best to leave them within the deposit tracking account otherwise
-    /// so that you can measure your accrued rewards automatically.
     pub fn deposit<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, Action<'info>>,
         input: Vec<u8>,
@@ -39,71 +23,62 @@ pub mod adapter_tulip {
 
         msg!("Input: {:?}", input_struct);
 
-        // Deriving Keys
-        let authority = ctx.remaining_accounts[0].clone();
-        let vault = ctx.remaining_accounts[1].clone();
-        let deposit_tracking_account = ctx.remaining_accounts[2].clone();
-        let deposit_tracking_hold_account = ctx.remaining_accounts[3].clone();
-        let shares_mint = ctx.remaining_accounts[4].clone();
-        let deposit_tracking_pda = ctx.remaining_accounts[5].clone();
-        let vault_pda = ctx.remaining_accounts[6].clone();
-        let vault_underlying_account = ctx.remaining_accounts[7].clone();
-        let receiving_shares_account = ctx.remaining_accounts[3].clone();
-        let depositing_underlying_account = ctx.remaining_accounts[8].clone();
+        let (ix, mut token_account_and_balance) = match input_struct.farm_type_0 {
+            0 => {
+                // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/mod.rs#L20
+                let token_account_and_balance =
+                    load_token_account_and_balance(ctx.remaining_accounts, 7);
+                let mut ix_data = sighash("globol", "issue_shares").try_to_vec()?;
+                ix_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
+                ix_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
+                ix_data.append(&mut input_struct.lp_or_token_a_amount.try_to_vec()?);
 
-        let mut share_token_account =
-            Account::<TokenAccount>::try_from(&deposit_tracking_hold_account)?;
-        let share_token_amount_before = share_token_account.amount;
+                let accounts = load_remaining_accounts(
+                    ctx.remaining_accounts,
+                    vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                );
+                (
+                    Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts,
+                        data: ix_data,
+                    },
+                    token_account_and_balance,
+                )
+            }
+            2 => {
+                // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L255
+                let token_account_and_balance =
+                    load_token_account_and_balance(ctx.remaining_accounts, 7);
+                let mut ix_data = sighash("globol", "orca_add_liq_issue_shares").try_to_vec()?;
+                ix_data.append(&mut input_struct.lp_or_token_a_amount.try_to_vec()?);
+                ix_data.append(&mut input_struct.token_b_amount.try_to_vec()?);
+                ix_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
+                ix_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
 
-        let farm_key = {
-            let mut vault_data = &**vault.try_borrow_data().unwrap();
-            let vault_account = VaultBaseV1::deserialize(&mut vault_data).unwrap();
-            vault_account.farm
+                let accounts = load_remaining_accounts(
+                    ctx.remaining_accounts,
+                    vec![
+                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+                    ],
+                );
+                (
+                    Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts,
+                        data: ix_data,
+                    },
+                    token_account_and_balance,
+                )
+            }
+            _ => return Err(ErrorCode::UnsupportedVaultProtocol.into()),
         };
 
-        /*
-            if this error is returned, it means the depositing_underlying_account
-            has less tokens (X) then requested deposit amount (Y)
-            Program log: RUNTIME ERROR: a(X) < b(Y)
-            Program log: panicked at 'RUNTIME ERROR: a(0) < b(1)', programs/vaults/src/vault_instructions/deposit_tracking/acl_helpers.rs:198:9
-        */
-        let ix = new_issue_shares_ix(
-            authority.key(),
-            vault.key(),
-            deposit_tracking_account.key(),
-            deposit_tracking_pda.key(),
-            vault_pda.key(),
-            vault_underlying_account.key(),
-            shares_mint.key(),
-            receiving_shares_account.key(),
-            depositing_underlying_account.key(),
-            // farm,
-            farm_key.into(),
-            input_struct.lp_amount,
-            ctx.accounts.base_program_id.key(),
-        );
-        anchor_lang::solana_program::program::invoke(
-            &ix,
-            &[
-                authority.clone(),
-                vault.clone(),
-                deposit_tracking_account.clone(),
-                deposit_tracking_pda.clone(),
-                vault_pda.clone(),
-                vault_underlying_account.to_account_info(),
-                shares_mint.to_account_info(),
-                receiving_shares_account.to_account_info(),
-                depositing_underlying_account.to_account_info(),
-            ],
-        )?;
-
-        share_token_account.reload()?;
-        let share_token_amount_after = share_token_account.amount;
-        let share_amount = share_token_amount_after - share_token_amount_before;
+        invoke(&ix, &ctx.remaining_accounts)?;
 
         // Wrap Output
         let output_struct = DepositOutputWrapper {
-            share_amount,
+            share_amount: token_account_and_balance.get_balance_change(),
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -129,100 +104,228 @@ pub mod adapter_tulip {
 
         msg!("Input: {:?}", input_struct);
 
-        // Deriving Keys
-        let authority = ctx.remaining_accounts[0].clone();
-        let vault = ctx.remaining_accounts[1].clone();
-        let receiving_shares_account = ctx.remaining_accounts[12].clone();
-        let lp_token_account_info = ctx.remaining_accounts[13].clone();
-        let shares_mint = ctx.remaining_accounts[14].clone();
-        let clock = ctx.remaining_accounts[15].clone();
-        let deposit_tracking_account = ctx.remaining_accounts[20].clone();
-        let deposit_tracking_pda = ctx.remaining_accounts[21].clone();
-        let deposit_tracking_hold_account = ctx.remaining_accounts[22].clone();
+        let (lp_or_token_a_amount, token_b_amount) = match input_struct.farm_type_0 {
+            0 => {
+                let mut token_account_and_balance =
+                    load_token_account_and_balance(ctx.remaining_accounts, 13);
 
-        let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
-        let lp_token_amount_before = lp_token_account.amount;
+                // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/deposit_tracking.rs#L38
+                let mut withdraw_deposit_tracking_data =
+                    sighash("globol", "withdraw_deposit_tracking").try_to_vec()?;
+                withdraw_deposit_tracking_data.append(&mut input_struct.share_amount.try_to_vec()?);
+                withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
+                withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
 
-        let farm_key = {
-            let mut vault_data = &**vault.try_borrow_data().unwrap();
-            let vault_account = VaultBaseV1::deserialize(&mut vault_data).unwrap();
-            vault_account.farm
+                let accounts = load_remaining_accounts(
+                    ctx.remaining_accounts,
+                    vec![0, 15, 16, 20, 21, 22, 12, 14, 1],
+                );
+
+                let withdraw_deposit_tracking_ix = Instruction {
+                    program_id: ctx.accounts.base_program_id.key(),
+                    accounts,
+                    data: withdraw_deposit_tracking_data,
+                };
+                invoke(
+                    &withdraw_deposit_tracking_ix,
+                    &[
+                        ctx.remaining_accounts[0].clone(),
+                        ctx.remaining_accounts[15].clone(),
+                        ctx.remaining_accounts[16].clone(),
+                        ctx.remaining_accounts[20].clone(),
+                        ctx.remaining_accounts[21].clone(),
+                        ctx.remaining_accounts[22].clone(),
+                        ctx.remaining_accounts[12].clone(),
+                        ctx.remaining_accounts[14].clone(),
+                        ctx.remaining_accounts[1].clone(),
+                    ],
+                )?;
+
+                // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/raydium.rs#L5
+                let mut withdraw_raydium_data =
+                    sighash("globol", "withdraw_raydium_vault").try_to_vec()?;
+                withdraw_raydium_data.append(&mut input_struct.share_amount.try_to_vec()?);
+                withdraw_raydium_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
+                withdraw_raydium_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
+
+                let withdraw_raydium_accounts = load_remaining_accounts(
+                    ctx.remaining_accounts,
+                    vec![
+                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+                    ],
+                );
+
+                let withdraw_raydium_ix = Instruction {
+                    program_id: ctx.accounts.base_program_id.key(),
+                    accounts: withdraw_raydium_accounts,
+                    data: withdraw_raydium_data,
+                };
+                invoke(&withdraw_raydium_ix, &ctx.remaining_accounts[0..20])?;
+                (token_account_and_balance.get_balance_change(), 0u64)
+            }
+            2 => {
+                let mut token_a_account_and_balance =
+                    load_token_account_and_balance(ctx.remaining_accounts, 4);
+                let mut token_b_account_and_balance =
+                    load_token_account_and_balance(ctx.remaining_accounts, 5);
+
+                // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/deposit_tracking.rs#L38
+                let mut withdraw_deposit_tracking_data =
+                    sighash("globol", "withdraw_deposit_tracking").try_to_vec()?;
+                withdraw_deposit_tracking_data.append(&mut input_struct.share_amount.try_to_vec()?);
+                withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
+                withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
+
+                let accounts = load_remaining_accounts(
+                    ctx.remaining_accounts,
+                    vec![8, 3, 28, 0, 1, 2, 11, 26, 9],
+                );
+
+                let withdraw_deposit_tracking_ix = Instruction {
+                    program_id: ctx.accounts.base_program_id.key(),
+                    accounts,
+                    data: withdraw_deposit_tracking_data,
+                };
+                invoke(
+                    &withdraw_deposit_tracking_ix,
+                    &[
+                        ctx.remaining_accounts[8].clone(),
+                        ctx.remaining_accounts[3].clone(),
+                        ctx.remaining_accounts[28].clone(),
+                        ctx.remaining_accounts[0].clone(),
+                        ctx.remaining_accounts[1].clone(),
+                        ctx.remaining_accounts[2].clone(),
+                        ctx.remaining_accounts[11].clone(),
+                        ctx.remaining_accounts[26].clone(),
+                        ctx.remaining_accounts[9].clone(),
+                    ],
+                )?;
+
+                let mut is_double_dip = false;
+                if ctx.remaining_accounts.len() == 33 {
+                    // withdraw vault
+                    // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L5
+                    let mut withdraw_raydium_data =
+                        sighash("globol", "withdraw_orca_vault").try_to_vec()?;
+                    withdraw_raydium_data.append(&mut false.try_to_vec()?);
+                    withdraw_raydium_data.append(&mut input_struct.share_amount.try_to_vec()?);
+                    withdraw_raydium_data.append(&mut 0u8.try_to_vec()?);
+
+                    let withdraw_raydium_accounts = load_remaining_accounts(
+                        ctx.remaining_accounts,
+                        vec![
+                            8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                            26, 27, 28, 29, 30, 31, 32, 33,
+                        ],
+                    );
+
+                    let withdraw_raydium_ix = Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts: withdraw_raydium_accounts,
+                        data: withdraw_raydium_data,
+                    };
+                    invoke(&withdraw_raydium_ix, &ctx.remaining_accounts[8..34])?;
+                } else {
+                    is_double_dip = true;
+                    // withdraw dd vault (two stage)
+                    // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L72
+                    let mut withdraw_orca_dd_vault_stage_one_data =
+                        sighash("globol", "withdraw_orca_vault_dd_stage_one").try_to_vec()?;
+                    withdraw_orca_dd_vault_stage_one_data.append(&mut true.try_to_vec()?);
+                    withdraw_orca_dd_vault_stage_one_data
+                        .append(&mut input_struct.share_amount.try_to_vec()?);
+                    withdraw_orca_dd_vault_stage_one_data.append(&mut 0u8.try_to_vec()?);
+
+                    let withdraw_orca_dd_vault_stage_one_accounts = load_remaining_accounts(
+                        ctx.remaining_accounts,
+                        vec![
+                            8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                            26, 27, 28, 29, 30, 31, 32, 33, 34,
+                        ],
+                    );
+
+                    let withdraw_orca_dd_vault_stage_one_ix = Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts: withdraw_orca_dd_vault_stage_one_accounts,
+                        data: withdraw_orca_dd_vault_stage_one_data,
+                    };
+                    invoke(
+                        &withdraw_orca_dd_vault_stage_one_ix,
+                        &ctx.remaining_accounts[8..35],
+                    )?;
+
+                    // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L144
+                    let withdraw_orca_dd_vault_stage_two_data =
+                        sighash("globol", "withdraw_orca_vault_dd_stage_two").try_to_vec()?;
+
+                    let withdraw_orca_dd_vault_stage_two_accounts = load_remaining_accounts(
+                        ctx.remaining_accounts,
+                        vec![
+                            8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                            26, 27, 28, 29, 30, 31, 32, 33,
+                        ],
+                    );
+
+                    let withdraw_orca_dd_vault_stage_two_ix = Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts: withdraw_orca_dd_vault_stage_two_accounts,
+                        data: withdraw_orca_dd_vault_stage_two_data,
+                    };
+                    invoke(
+                        &withdraw_orca_dd_vault_stage_two_ix,
+                        &ctx.remaining_accounts[8..34],
+                    )?;
+                }
+
+                // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L209
+                let mut remove_liq_data =
+                    sighash("globol", "withdraw_orca_vault_remove_liq").try_to_vec()?;
+                remove_liq_data.append(&mut is_double_dip.try_to_vec()?);
+
+                let remove_liq_accounts = load_remaining_accounts(
+                    ctx.remaining_accounts,
+                    vec![8, 9, 10, 11, 4, 5, 6, 7, 29, 22, 23, 24, 27, 28, 31, 26],
+                );
+
+                let remove_liq_ix = Instruction {
+                    program_id: ctx.accounts.base_program_id.key(),
+                    accounts: remove_liq_accounts,
+                    data: remove_liq_data,
+                };
+                invoke(
+                    &remove_liq_ix,
+                    &[
+                        ctx.remaining_accounts[8].clone(),
+                        ctx.remaining_accounts[9].clone(),
+                        ctx.remaining_accounts[10].clone(),
+                        ctx.remaining_accounts[11].clone(),
+                        ctx.remaining_accounts[4].clone(),
+                        ctx.remaining_accounts[5].clone(),
+                        ctx.remaining_accounts[6].clone(),
+                        ctx.remaining_accounts[7].clone(),
+                        ctx.remaining_accounts[29].clone(),
+                        ctx.remaining_accounts[22].clone(),
+                        ctx.remaining_accounts[23].clone(),
+                        ctx.remaining_accounts[24].clone(),
+                        ctx.remaining_accounts[27].clone(),
+                        ctx.remaining_accounts[28].clone(),
+                        ctx.remaining_accounts[31].clone(),
+                        ctx.remaining_accounts[26].clone(),
+                    ],
+                )?;
+
+                (
+                    token_a_account_and_balance.get_balance_change(),
+                    token_b_account_and_balance.get_balance_change(),
+                )
+            }
+            _ => return Err(ErrorCode::UnsupportedVaultProtocol.into()),
         };
-
-        let ix = new_withdraw_deposit_tracking_ix(
-            authority.key(),
-            deposit_tracking_account.key(),
-            deposit_tracking_pda.key(),
-            deposit_tracking_hold_account.key(),
-            receiving_shares_account.key(),
-            shares_mint.key(),
-            vault.key(),
-            farm_key.into(),
-            // farm,
-            input_struct.share_amount,
-            ctx.accounts.base_program_id.key(),
-        );
-        anchor_lang::solana_program::program::invoke(
-            &ix,
-            &[
-                authority.clone(),
-                clock.to_account_info(),
-                deposit_tracking_account.clone(),
-                deposit_tracking_pda.clone(),
-                deposit_tracking_hold_account.to_account_info(),
-                receiving_shares_account.to_account_info(),
-                shares_mint.to_account_info(),
-                vault.clone(),
-            ],
-        )?;
-
-        let sighash_arr = sighash("global", "withdraw_raydium_vault");
-
-        let withdraw_raydium_accounts = vec![
-            AccountMeta::new(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[9].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[10].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[11].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[12].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[13].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[14].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[15].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[16].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[17].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[18].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[19].key(), false),
-        ];
-
-        let mut withdraw_raydium_data = vec![];
-        withdraw_raydium_data.append(&mut sighash_arr.try_to_vec()?);
-        withdraw_raydium_data.append(&mut input_struct.share_amount.try_to_vec()?);
-
-        let withdraw_raydium_ix = Instruction {
-            program_id: ctx.accounts.base_program_id.key(),
-            accounts: withdraw_raydium_accounts,
-            data: withdraw_raydium_data,
-        };
-
-        anchor_lang::solana_program::program::invoke(
-            &withdraw_raydium_ix,
-            &ctx.remaining_accounts[0..20],
-        )?;
-
-        lp_token_account.reload()?;
-        let lp_token_amount_after = lp_token_account.amount;
-        let lp_amount = lp_token_amount_after - lp_token_amount_before;
 
         // Wrap Output
         let output_struct = WithdrawOutputWrapper {
-            lp_amount,
+            lp_or_token_a_amount,
+            token_b_amount,
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -232,298 +335,6 @@ pub mod adapter_tulip {
 
         msg!("Output: {:?}", output_struct);
 
-        Ok(())
-    }
-
-    /// burns/redeems the `amount` of shares for their corresponding amount
-    /// of underlying asset, using the mango standalone vault as the source of funds to withdraw from
-    pub fn withdraw_multi_deposit_vault_through_mango(
-        ctx: Context<WithdrawMangoMultiDepositOptimizerVault>,
-        amount: u64,
-    ) -> Result<()> {
-        let standalone_vault_accounts = vec![
-            AccountMeta::new_readonly(ctx.accounts.mango_group_account.key(), false),
-            AccountMeta::new(ctx.accounts.withdraw_vault_mango_account.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.mango_cache.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.mango_root_bank.key(), false),
-            AccountMeta::new(ctx.accounts.mango_node_bank.key(), false),
-            AccountMeta::new(ctx.accounts.mango_token_account.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.mango_group_signer.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.system_program.key(), false),
-        ];
-        let ix = new_withdraw_multi_deposit_optimizer_vault_ix(
-            ctx.accounts.common_data.authority.key(),
-            ctx.accounts.common_data.multi_vault.key(),
-            ctx.accounts.common_data.multi_vault_pda.key(),
-            ctx.accounts.common_data.withdraw_vault.key(),
-            ctx.accounts.common_data.withdraw_vault_pda.key(),
-            ctx.accounts.common_data.platform_information.key(),
-            ctx.accounts.common_data.platform_config_data.key(),
-            ctx.accounts.common_data.lending_program.key(),
-            ctx.accounts
-                .common_data
-                .multi_burning_shares_token_account
-                .key(),
-            ctx.accounts
-                .common_data
-                .withdraw_burning_shares_token_account
-                .key(),
-            ctx.accounts
-                .common_data
-                .receiving_underlying_token_account
-                .key(),
-            ctx.accounts
-                .common_data
-                .multi_underlying_withdraw_queue
-                .key(),
-            ctx.accounts.common_data.multi_shares_mint.key(),
-            ctx.accounts.common_data.withdraw_shares_mint.key(),
-            ctx.accounts
-                .common_data
-                .withdraw_vault_underlying_deposit_queue
-                .key(),
-            amount,
-            standalone_vault_accounts.clone(),
-        );
-        anchor_lang::solana_program::program::invoke(
-            &ix,
-            &[
-                ctx.accounts.common_data.authority.clone(),
-                ctx.accounts.common_data.multi_vault.clone(),
-                ctx.accounts.common_data.multi_vault_pda.clone(),
-                ctx.accounts.common_data.withdraw_vault.clone(),
-                ctx.accounts.common_data.withdraw_vault_pda.clone(),
-                ctx.accounts.common_data.platform_information.clone(),
-                ctx.accounts.common_data.platform_config_data.clone(),
-                ctx.accounts.common_data.lending_program.clone(),
-                ctx.accounts
-                    .common_data
-                    .multi_burning_shares_token_account
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .withdraw_burning_shares_token_account
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .receiving_underlying_token_account
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .multi_underlying_withdraw_queue
-                    .to_account_info(),
-                ctx.accounts.common_data.multi_shares_mint.to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .withdraw_shares_mint
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .withdraw_vault_underlying_deposit_queue
-                    .to_account_info(),
-                ctx.accounts.mango_group_account.clone(),
-                ctx.accounts.withdraw_vault_mango_account.clone(),
-                ctx.accounts.mango_cache.clone(),
-                ctx.accounts.mango_root_bank.clone(),
-                ctx.accounts.mango_node_bank.clone(),
-                ctx.accounts.mango_token_account.to_account_info(),
-                ctx.accounts.mango_group_signer.clone(),
-                ctx.accounts.system_program.to_account_info(),
-                ctx.accounts.common_data.clock.to_account_info(),
-            ],
-        )?;
-        Ok(())
-    }
-    /// burns/redeems the `amount` of shares for their corresponding amount
-    /// of underlying asset, using the solend standalone vault as the source of funds to withdraw from
-    pub fn withdraw_multi_deposit_vault_through_solend(
-        ctx: Context<WithdrawSolendMultiDepositOptimizerVault>,
-        amount: u64,
-    ) -> Result<()> {
-        let standalone_vault_accounts = vec![
-            AccountMeta::new_readonly(ctx.accounts.reserve_account.key(), false),
-            AccountMeta::new(ctx.accounts.reserve_liquidity_supply.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.reserve_collateral_mint.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.lending_market_account.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.derived_lending_market_authority.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.reserve_pyth_price_account.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.reserve_switchboard_price_account.key(), false),
-        ];
-        let ix = new_withdraw_multi_deposit_optimizer_vault_ix(
-            ctx.accounts.common_data.authority.key(),
-            ctx.accounts.common_data.multi_vault.key(),
-            ctx.accounts.common_data.multi_vault_pda.key(),
-            ctx.accounts.common_data.withdraw_vault.key(),
-            ctx.accounts.common_data.withdraw_vault_pda.key(),
-            ctx.accounts.common_data.platform_information.key(),
-            ctx.accounts.common_data.platform_config_data.key(),
-            ctx.accounts.common_data.lending_program.key(),
-            ctx.accounts
-                .common_data
-                .multi_burning_shares_token_account
-                .key(),
-            ctx.accounts
-                .common_data
-                .withdraw_burning_shares_token_account
-                .key(),
-            ctx.accounts
-                .common_data
-                .receiving_underlying_token_account
-                .key(),
-            ctx.accounts
-                .common_data
-                .multi_underlying_withdraw_queue
-                .key(),
-            ctx.accounts.common_data.multi_shares_mint.key(),
-            ctx.accounts.common_data.withdraw_shares_mint.key(),
-            ctx.accounts
-                .common_data
-                .withdraw_vault_underlying_deposit_queue
-                .key(),
-            amount,
-            standalone_vault_accounts.clone(),
-        );
-        anchor_lang::solana_program::program::invoke(
-            &ix,
-            &[
-                ctx.accounts.common_data.authority.clone(),
-                ctx.accounts.common_data.multi_vault.clone(),
-                ctx.accounts.common_data.multi_vault_pda.clone(),
-                ctx.accounts.common_data.withdraw_vault.clone(),
-                ctx.accounts.common_data.withdraw_vault_pda.clone(),
-                ctx.accounts.common_data.platform_information.clone(),
-                ctx.accounts.common_data.platform_config_data.clone(),
-                ctx.accounts.common_data.lending_program.clone(),
-                ctx.accounts
-                    .common_data
-                    .multi_burning_shares_token_account
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .withdraw_burning_shares_token_account
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .receiving_underlying_token_account
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .multi_underlying_withdraw_queue
-                    .to_account_info(),
-                ctx.accounts.common_data.multi_shares_mint.to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .withdraw_shares_mint
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .withdraw_vault_underlying_deposit_queue
-                    .to_account_info(),
-                ctx.accounts.reserve_account.clone(),
-                ctx.accounts.reserve_liquidity_supply.to_account_info(),
-                ctx.accounts.reserve_collateral_mint.to_account_info(),
-                ctx.accounts.lending_market_account.clone(),
-                ctx.accounts.derived_lending_market_authority.clone(),
-                ctx.accounts.reserve_pyth_price_account.to_account_info(),
-                ctx.accounts.reserve_switchboard_price_account.clone(),
-                ctx.accounts.common_data.clock.to_account_info(),
-            ],
-        )?;
-        Ok(())
-    }
-    /// burns/redeems the `amount` of shares for their corresponding amount
-    /// of underlying asset, using the tulip standalone vault as the source of funds to withdraw from
-    pub fn withdraw_multi_deposit_vault_through_tulip(
-        ctx: Context<WithdrawTulipMultiDepositOptimizerVault>,
-        amount: u64,
-    ) -> Result<()> {
-        let standalone_vault_accounts = vec![
-            AccountMeta::new_readonly(ctx.accounts.reserve_account.key(), false),
-            AccountMeta::new(ctx.accounts.reserve_liquidity_supply.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.reserve_collateral_mint.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.lending_market_account.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.derived_lending_market_authority.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.reserve_pyth_price_account.key(), false),
-        ];
-        let ix = new_withdraw_multi_deposit_optimizer_vault_ix(
-            ctx.accounts.common_data.authority.key(),
-            ctx.accounts.common_data.multi_vault.key(),
-            ctx.accounts.common_data.multi_vault_pda.key(),
-            ctx.accounts.common_data.withdraw_vault.key(),
-            ctx.accounts.common_data.withdraw_vault_pda.key(),
-            ctx.accounts.common_data.platform_information.key(),
-            ctx.accounts.common_data.platform_config_data.key(),
-            ctx.accounts.common_data.lending_program.key(),
-            ctx.accounts
-                .common_data
-                .multi_burning_shares_token_account
-                .key(),
-            ctx.accounts
-                .common_data
-                .withdraw_burning_shares_token_account
-                .key(),
-            ctx.accounts
-                .common_data
-                .receiving_underlying_token_account
-                .key(),
-            ctx.accounts
-                .common_data
-                .multi_underlying_withdraw_queue
-                .key(),
-            ctx.accounts.common_data.multi_shares_mint.key(),
-            ctx.accounts.common_data.withdraw_shares_mint.key(),
-            ctx.accounts
-                .common_data
-                .withdraw_vault_underlying_deposit_queue
-                .key(),
-            amount,
-            standalone_vault_accounts.clone(),
-        );
-        anchor_lang::solana_program::program::invoke(
-            &ix,
-            &[
-                ctx.accounts.common_data.authority.clone(),
-                ctx.accounts.common_data.multi_vault.clone(),
-                ctx.accounts.common_data.multi_vault_pda.clone(),
-                ctx.accounts.common_data.withdraw_vault.clone(),
-                ctx.accounts.common_data.withdraw_vault_pda.clone(),
-                ctx.accounts.common_data.platform_information.clone(),
-                ctx.accounts.common_data.platform_config_data.clone(),
-                ctx.accounts.common_data.lending_program.clone(),
-                ctx.accounts
-                    .common_data
-                    .multi_burning_shares_token_account
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .withdraw_burning_shares_token_account
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .receiving_underlying_token_account
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .multi_underlying_withdraw_queue
-                    .to_account_info(),
-                ctx.accounts.common_data.multi_shares_mint.to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .withdraw_shares_mint
-                    .to_account_info(),
-                ctx.accounts
-                    .common_data
-                    .withdraw_vault_underlying_deposit_queue
-                    .to_account_info(),
-                ctx.accounts.reserve_account.clone(),
-                ctx.accounts.reserve_liquidity_supply.to_account_info(),
-                ctx.accounts.reserve_collateral_mint.to_account_info(),
-                ctx.accounts.lending_market_account.clone(),
-                ctx.accounts.derived_lending_market_authority.clone(),
-                ctx.accounts.reserve_pyth_price_account.to_account_info(),
-                ctx.accounts.common_data.clock.to_account_info(),
-            ],
-        )?;
         Ok(())
     }
 
@@ -662,232 +473,6 @@ pub mod adapter_tulip {
 }
 
 #[derive(Accounts)]
-pub struct RegisterDepositTrackingAccount<'info> {
-    /// CHECK: Safe
-    #[account(mut, signer)]
-    pub authority: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub vault: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub deposit_tracking_account: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub deposit_tracking_queue_account: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub deposit_tracking_hold_account: AccountInfo<'info>,
-    #[account(mut)]
-    pub shares_mint: Box<Account<'info, Mint>>,
-    #[account(mut)]
-    pub underlying_mint: Box<Account<'info, Mint>>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub deposit_tracking_pda: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub token_program: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub associated_token_program: AccountInfo<'info>,
-    pub rent: Sysvar<'info, Rent>,
-    pub system_program: Program<'info, System>,
-    /// CHECK: Safe
-    pub vault_program: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-pub struct IssueShares<'info> {
-    /// CHECK: Safe
-    #[account(signer)]
-    pub authority: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub vault: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub deposit_tracking_account: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub deposit_tracking_pda: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub vault_pda: AccountInfo<'info>,
-    #[account(mut)]
-    pub shares_mint: Box<Account<'info, Mint>>,
-    #[account(mut)]
-    /// the account which will receive the issued shares
-    /// this is the deposit_tracking_hold_account
-    pub receiving_shares_account: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    /// the account owned by the authority which contains the underlying tokens
-    /// we want to deposit in exchange for the vault shares
-    pub depositing_underlying_account: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    /// the underlying token account that is owned by the vault pda
-    /// which holds the underlying tokens until they are swept into the farm.
-    ///
-    /// also known as the deposit queue account
-    pub vault_underlying_account: Box<Account<'info, TokenAccount>>,
-    pub system_program: Program<'info, System>,
-    /// CHECK: Safe
-    pub vault_program: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub token_program: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-pub struct WithdrawDepositTrackingAccount<'info> {
-    /// CHECK: Safe
-    #[account(signer)]
-    pub authority: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub deposit_tracking_account: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub deposit_tracking_pda: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub deposit_tracking_hold_account: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    /// this is the token account owned by the authority that
-    /// should receive the tokenized shares which are being removed
-    /// from the deposit tracking account. do note that this means
-    /// these shares are no longer being tracked by the deposit tracking
-    /// account, and any newly accrued rewards tracked by the deposit tracking
-    /// account will reflect the remaining balance that hasn't been withdrawn
-    ///
-    /// **the shares that are being withdrawn still accrue rewards the same as shares that are held by the deposit tracking account**
-    pub receiving_shares_account: Box<Account<'info, TokenAccount>>,
-    /// CHECK: Safe
-    pub shares_mint: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub vault: AccountInfo<'info>,
-    pub clock: Sysvar<'info, Clock>,
-    /// CHECK: Safe
-    pub vault_program: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub token_program: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-pub struct WithdrawMultiDepositOptimizerVault<'info> {
-    /// CHECK: Safe
-    #[account(signer)]
-    pub authority: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub multi_vault: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub multi_vault_pda: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub withdraw_vault: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub withdraw_vault_pda: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub platform_information: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub platform_config_data: AccountInfo<'info>,
-    #[account(mut)]
-    /// this is the token account owned by the authority for the multi vault
-    /// shares mint, which are the tokens we are burning/redeeming in exchange
-    /// for the underlying asset
-    pub multi_burning_shares_token_account: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    /// this is the account owned by the multi vault pda that holds the tokenized
-    /// shares issued by the withdraw vault.
-    pub withdraw_burning_shares_token_account: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    /// this is the account owned by the authority which will receive the underlying
-    pub receiving_underlying_token_account: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    /// this is the underlying token account owned by the multi deposit vault
-    /// which is used to temporarily store tokens during the token withdraw process
-    pub multi_underlying_withdraw_queue: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    pub multi_shares_mint: Box<Account<'info, Mint>>,
-    #[account(mut)]
-    pub withdraw_shares_mint: Box<Account<'info, Mint>>,
-    #[account(mut)]
-    /// this is the underlying token account owned by the withdraw vault we are
-    /// removing underlying assets from
-    pub withdraw_vault_underlying_deposit_queue: Box<Account<'info, TokenAccount>>,
-    pub clock: Sysvar<'info, Clock>,
-    /// CHECK: Safe
-    pub token_program: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub lending_program: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub vault_program: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-pub struct WithdrawMangoMultiDepositOptimizerVault<'info> {
-    /// configuration data common to all multi deposit withdraw instructions
-    /// regardless of the underlying vault htey are withdrawing from
-    pub common_data: WithdrawMultiDepositOptimizerVault<'info>,
-    /// CHECK: Safe
-    pub mango_group_account: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub withdraw_vault_mango_account: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub mango_cache: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub mango_root_bank: AccountInfo<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub mango_node_bank: AccountInfo<'info>,
-    #[account(mut)]
-    pub mango_token_account: Box<Account<'info, TokenAccount>>,
-    /// CHECK: Safe
-    pub mango_group_signer: AccountInfo<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct WithdrawSolendMultiDepositOptimizerVault<'info> {
-    /// configuration data common to all multi deposit withdraw instructions
-    /// regardless of the underlying vault htey are withdrawing from
-    pub common_data: WithdrawMultiDepositOptimizerVault<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub reserve_account: AccountInfo<'info>,
-    #[account(mut)]
-    pub reserve_liquidity_supply: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    pub reserve_collateral_mint: Box<Account<'info, Mint>>,
-    /// CHECK: Safe
-    pub lending_market_account: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub derived_lending_market_authority: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub reserve_pyth_price_account: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub reserve_switchboard_price_account: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-pub struct WithdrawTulipMultiDepositOptimizerVault<'info> {
-    /// configuration data common to all multi deposit withdraw instructions
-    /// regardless of the underlying vault htey are withdrawing from
-    pub common_data: WithdrawMultiDepositOptimizerVault<'info>,
-    /// CHECK: Safe
-    #[account(mut)]
-    pub reserve_account: AccountInfo<'info>,
-    #[account(mut)]
-    pub reserve_liquidity_supply: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
-    pub reserve_collateral_mint: Box<Account<'info, Mint>>,
-    /// CHECK: Safe
-    pub lending_market_account: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub derived_lending_market_authority: AccountInfo<'info>,
-    /// CHECK: Safe
-    pub reserve_pyth_price_account: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
 pub struct Action<'info> {
     // TODO: Add constraints
     pub gateway_authority: Signer<'info>,
@@ -897,12 +482,17 @@ pub struct Action<'info> {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct DepositInputWrapper {
-    pub lp_amount: u64,
+    pub lp_or_token_a_amount: u64,
+    pub token_b_amount: u64,
+    pub farm_type_0: u64,
+    pub farm_type_1: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct WithdrawInputWrapper {
     pub share_amount: u64,
+    pub farm_type_0: u64,
+    pub farm_type_1: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
@@ -927,8 +517,8 @@ pub struct DepositOutputWrapper {
 // OutputWrapper needs to take up all the space of 32 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct WithdrawOutputWrapper {
-    pub lp_amount: u64,
-    pub dummy_2: u64,
+    pub lp_or_token_a_amount: u64,
+    pub token_b_amount: u64,
     pub dummy_3: u64,
     pub dummy_4: u64,
 }
@@ -971,12 +561,12 @@ impl From<DepositOutputWrapper> for DepositOutputTuple {
 impl From<WithdrawOutputWrapper> for WithdrawOutputTuple {
     fn from(result: WithdrawOutputWrapper) -> WithdrawOutputTuple {
         let WithdrawOutputWrapper {
-            lp_amount,
-            dummy_2,
+            lp_or_token_a_amount,
+            token_b_amount,
             dummy_3,
             dummy_4,
         } = result;
-        (lp_amount, dummy_2, dummy_3, dummy_4)
+        (lp_or_token_a_amount, token_b_amount, dummy_3, dummy_4)
     }
 }
 
@@ -1004,10 +594,69 @@ impl From<UnsupplyOutputWrapper> for UnsupplyOutputTuple {
     }
 }
 
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Unsupported Vault Protocol")]
+    UnsupportedVaultProtocol,
+}
+
 pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
     let preimage = format!("{}:{}", namespace, name);
     let mut sighash = [0u8; 8];
 
     sighash.copy_from_slice(&hash(preimage.as_bytes()).to_bytes()[..8]);
     sighash
+}
+pub fn load_token_account_and_balance<'info>(
+    remaining_accounts: &[AccountInfo<'info>],
+    account_index: usize,
+) -> TokenAccountAndBalance<'info> {
+    let token_account_info = &remaining_accounts[account_index];
+    let token_account = Account::<TokenAccount>::try_from(token_account_info).unwrap();
+    let balance_before = token_account.amount.clone();
+    return TokenAccountAndBalance {
+        token_account,
+        balance_before,
+    };
+}
+
+pub struct TokenAccountAndBalance<'info> {
+    token_account: Account<'info, TokenAccount>,
+    balance_before: u64,
+}
+
+impl<'info> TokenAccountAndBalance<'info> {
+    pub fn get_balance_change(&mut self) -> u64 {
+        self.token_account.reload().unwrap();
+        let balance_before = self.balance_before;
+        let balance_after = self.token_account.amount;
+        if balance_after > balance_before {
+            balance_after.checked_sub(balance_before).unwrap()
+        } else if balance_after == balance_before {
+            0_u64
+        } else {
+            balance_before.checked_sub(balance_after).unwrap()
+        }
+    }
+}
+
+pub fn load_remaining_accounts<'info>(
+    remaining_accounts: &[AccountInfo<'info>],
+    index_array: Vec<usize>,
+) -> Vec<AccountMeta> {
+    let mut accounts: Vec<AccountMeta> = vec![];
+    for index in index_array.iter() {
+        if remaining_accounts[*index].is_writable {
+            accounts.push(AccountMeta::new(
+                remaining_accounts[*index].key(),
+                remaining_accounts[*index].is_signer,
+            ))
+        } else {
+            accounts.push(AccountMeta::new_readonly(
+                remaining_accounts[*index].key(),
+                remaining_accounts[*index].is_signer,
+            ))
+        }
+    }
+    return accounts;
 }
