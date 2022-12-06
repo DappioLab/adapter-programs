@@ -142,8 +142,6 @@ pub mod adapter_lido {
 pub struct Action<'info> {
     pub gateway_authority: Signer<'info>,
     /// CHECK: Safe
-    pub gateway_state_info: AccountInfo<'info>,
-    /// CHECK: Safe
     pub base_program_id: AccountInfo<'info>,
 }
 
