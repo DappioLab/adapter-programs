@@ -165,44 +165,44 @@ pub mod adapter_tulip {
             }
             2 => {
                 let mut token_a_account_and_balance =
-                    load_token_account_and_balance(ctx.remaining_accounts, 8);
-                // let mut token_b_account_and_balance =
-                //     load_token_account_and_balance(ctx.remaining_accounts, 5);
+                    load_token_account_and_balance(ctx.remaining_accounts, 4);
+                let mut token_b_account_and_balance =
+                    load_token_account_and_balance(ctx.remaining_accounts, 5);
 
                 // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/deposit_tracking.rs#L38
-                // let mut withdraw_deposit_tracking_data =
-                //     sighash("global", "withdraw_deposit_tracking").try_to_vec()?;
-                // withdraw_deposit_tracking_data.append(&mut input_struct.share_amount.try_to_vec()?);
-                // withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
-                // withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
+                let mut withdraw_deposit_tracking_data =
+                    sighash("global", "withdraw_deposit_tracking").try_to_vec()?;
+                withdraw_deposit_tracking_data.append(&mut input_struct.share_amount.try_to_vec()?);
+                withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
+                withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
 
-                // let accounts = load_remaining_accounts(
-                //     ctx.remaining_accounts,
-                //     vec![4, 3, 24, 0, 1, 2, 7, 22, 5],
-                // );
+                let accounts = load_remaining_accounts(
+                    ctx.remaining_accounts,
+                    vec![6, 3, 27, 0, 1, 2, 9, 25, 7],
+                );
 
-                // let withdraw_deposit_tracking_ix = Instruction {
-                //     program_id: ctx.accounts.base_program_id.key(),
-                //     accounts,
-                //     data: withdraw_deposit_tracking_data,
-                // };
-                // invoke(
-                //     &withdraw_deposit_tracking_ix,
-                //     &[
-                //         ctx.remaining_accounts[4].clone(),
-                //         ctx.remaining_accounts[3].clone(),
-                //         ctx.remaining_accounts[24].clone(),
-                //         ctx.remaining_accounts[0].clone(),
-                //         ctx.remaining_accounts[1].clone(),
-                //         ctx.remaining_accounts[2].clone(),
-                //         ctx.remaining_accounts[7].clone(),
-                //         ctx.remaining_accounts[22].clone(),
-                //         ctx.remaining_accounts[5].clone(),
-                //     ],
-                // )?;
+                let withdraw_deposit_tracking_ix = Instruction {
+                    program_id: ctx.accounts.base_program_id.key(),
+                    accounts,
+                    data: withdraw_deposit_tracking_data,
+                };
+                invoke(
+                    &withdraw_deposit_tracking_ix,
+                    &[
+                        ctx.remaining_accounts[6].clone(),
+                        ctx.remaining_accounts[3].clone(),
+                        ctx.remaining_accounts[27].clone(),
+                        ctx.remaining_accounts[0].clone(),
+                        ctx.remaining_accounts[1].clone(),
+                        ctx.remaining_accounts[2].clone(),
+                        ctx.remaining_accounts[9].clone(),
+                        ctx.remaining_accounts[25].clone(),
+                        ctx.remaining_accounts[7].clone(),
+                    ],
+                )?;
 
-                // let mut is_double_dip = false;
-                if ctx.remaining_accounts.len() == 24 {
+                let mut is_double_dip = false;
+                if ctx.remaining_accounts.len() == 33 {
                     // withdraw vault
                     // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L5
                     let mut withdraw_orca_vault_data =
@@ -214,8 +214,8 @@ pub mod adapter_tulip {
                     let withdraw_orca_vault_accounts = load_remaining_accounts(
                         ctx.remaining_accounts,
                         vec![
-                            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                            20, 21, 22, 23, //24, 25,
+                            6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                            25, 26, 27, 28, 29, 30, 31, 32,
                         ],
                     );
 
@@ -224,9 +224,9 @@ pub mod adapter_tulip {
                         accounts: withdraw_orca_vault_accounts,
                         data: withdraw_orca_vault_data,
                     };
-                    invoke(&withdraw_orca_vault_ix, &ctx.remaining_accounts[0..24])?;
+                    invoke(&withdraw_orca_vault_ix, &ctx.remaining_accounts[6..33])?;
                 } else {
-                    // is_double_dip = true;
+                    is_double_dip = true;
                     // withdraw dd vault (two stage)
                     // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L72
                     let mut withdraw_orca_dd_vault_stage_one_data =
@@ -239,8 +239,8 @@ pub mod adapter_tulip {
                     let withdraw_orca_dd_vault_stage_one_accounts = load_remaining_accounts(
                         ctx.remaining_accounts,
                         vec![
-                            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                            20, 21, 22, 23, //24, 25, 26, //27, 28, 29, 30, //31, 32, 33, 34,
+                            6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                            24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
                         ],
                     );
 
@@ -251,7 +251,7 @@ pub mod adapter_tulip {
                     };
                     invoke(
                         &withdraw_orca_dd_vault_stage_one_ix,
-                        &ctx.remaining_accounts[0..24],
+                        &ctx.remaining_accounts[6..35],
                     )?;
 
                     // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L144
@@ -261,8 +261,8 @@ pub mod adapter_tulip {
                     let withdraw_orca_dd_vault_stage_two_accounts = load_remaining_accounts(
                         ctx.remaining_accounts,
                         vec![
-                            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                            20, 21, 22, 23, 24,
+                            6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                            24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
                         ],
                     );
 
@@ -273,50 +273,50 @@ pub mod adapter_tulip {
                     };
                     invoke(
                         &withdraw_orca_dd_vault_stage_two_ix,
-                        &ctx.remaining_accounts[0..25],
+                        &ctx.remaining_accounts[6..34],
                     )?;
                 }
 
                 // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L209
-                // let mut remove_liq_data =
-                //     sighash("global", "withdraw_orca_vault_remove_liq").try_to_vec()?;
-                // remove_liq_data.append(&mut is_double_dip.try_to_vec()?);
+                let mut remove_liq_data =
+                    sighash("global", "withdraw_orca_vault_remove_liq").try_to_vec()?;
+                remove_liq_data.append(&mut is_double_dip.try_to_vec()?);
 
-                // let remove_liq_accounts = load_remaining_accounts(
-                //     ctx.remaining_accounts,
-                //     vec![8, 9, 10, 11, 4, 5, 6, 7, 29, 22, 23, 24, 27, 28, 31, 26],
-                // );
+                let remove_liq_accounts = load_remaining_accounts(
+                    ctx.remaining_accounts,
+                    vec![6, 7, 8, 10, 4, 5, 16, 17, 28, 21, 22, 23, 26, 27, 30, 25],
+                );
 
-                // let remove_liq_ix = Instruction {
-                //     program_id: ctx.accounts.base_program_id.key(),
-                //     accounts: remove_liq_accounts,
-                //     data: remove_liq_data,
-                // };
-                // invoke(
-                //     &remove_liq_ix,
-                //     &[
-                //         ctx.remaining_accounts[8].clone(),
-                //         ctx.remaining_accounts[9].clone(),
-                //         ctx.remaining_accounts[10].clone(),
-                //         ctx.remaining_accounts[11].clone(),
-                //         ctx.remaining_accounts[4].clone(),
-                //         ctx.remaining_accounts[5].clone(),
-                //         ctx.remaining_accounts[6].clone(),
-                //         ctx.remaining_accounts[7].clone(),
-                //         ctx.remaining_accounts[29].clone(),
-                //         ctx.remaining_accounts[22].clone(),
-                //         ctx.remaining_accounts[23].clone(),
-                //         ctx.remaining_accounts[24].clone(),
-                //         ctx.remaining_accounts[27].clone(),
-                //         ctx.remaining_accounts[28].clone(),
-                //         ctx.remaining_accounts[31].clone(),
-                //         ctx.remaining_accounts[26].clone(),
-                //     ],
-                // )?;
+                let remove_liq_ix = Instruction {
+                    program_id: ctx.accounts.base_program_id.key(),
+                    accounts: remove_liq_accounts,
+                    data: remove_liq_data,
+                };
+                invoke(
+                    &remove_liq_ix,
+                    &[
+                        ctx.remaining_accounts[6].clone(),
+                        ctx.remaining_accounts[7].clone(),
+                        ctx.remaining_accounts[8].clone(),
+                        ctx.remaining_accounts[10].clone(),
+                        ctx.remaining_accounts[4].clone(),
+                        ctx.remaining_accounts[5].clone(),
+                        ctx.remaining_accounts[16].clone(),
+                        ctx.remaining_accounts[17].clone(),
+                        ctx.remaining_accounts[28].clone(),
+                        ctx.remaining_accounts[21].clone(),
+                        ctx.remaining_accounts[22].clone(),
+                        ctx.remaining_accounts[23].clone(),
+                        ctx.remaining_accounts[26].clone(),
+                        ctx.remaining_accounts[27].clone(),
+                        ctx.remaining_accounts[30].clone(),
+                        ctx.remaining_accounts[25].clone(),
+                    ],
+                )?;
 
                 (
                     token_a_account_and_balance.get_balance_change(),
-                    0, //token_b_account_and_balance.get_balance_change(),
+                    token_b_account_and_balance.get_balance_change(),
                 )
             }
             _ => return Err(ErrorCode::UnsupportedVaultProtocol.into()),
