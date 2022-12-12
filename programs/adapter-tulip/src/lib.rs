@@ -127,7 +127,7 @@ pub mod adapter_tulip {
                     accounts: withdraw_deposit_tracking_accounts,
                     data: withdraw_deposit_tracking_data,
                 };
-                let withdraw_deposit_tracking_account_infos = account_info_array(
+                let withdraw_deposit_tracking_account_infos = get_account_info_array(
                     ctx.remaining_accounts,
                     withdraw_deposit_tracking_index_array.clone(),
                 );
@@ -183,7 +183,7 @@ pub mod adapter_tulip {
                     accounts: withdraw_deposit_tracking_accounts,
                     data: withdraw_deposit_tracking_data,
                 };
-                let withdraw_deposit_tracking_account_infos = account_info_array(
+                let withdraw_deposit_tracking_account_infos = get_account_info_array(
                     ctx.remaining_accounts,
                     withdraw_deposit_tracking_index_array.clone(),
                 );
@@ -285,7 +285,7 @@ pub mod adapter_tulip {
                     data: remove_liq_data,
                 };
                 let remove_liq_account_infos =
-                    account_info_array(ctx.remaining_accounts, remove_liq_index_array.clone());
+                    get_account_info_array(ctx.remaining_accounts, remove_liq_index_array.clone());
                 invoke(
                     &remove_liq_ix,
                     &remove_liq_account_infos[0..remove_liq_index_array.len()],
@@ -640,7 +640,7 @@ pub fn load_remaining_accounts<'info>(
     return accounts;
 }
 
-pub fn account_info_array<'info>(
+pub fn get_account_info_array<'info>(
     remaining_accounts: &[AccountInfo<'info>],
     index_array: Vec<usize>,
 ) -> [AccountInfo<'info>; 30] {
