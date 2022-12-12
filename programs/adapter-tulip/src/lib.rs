@@ -7,7 +7,7 @@ use anchor_lang::solana_program::{
 };
 use anchor_spl::token::TokenAccount;
 
-declare_id!("iFdAXmNn1JrKVNeC53eDPQ82TDB8e2MaK1a8VzY6YLB");
+declare_id!("ADPT9nhC1asRcEB13FKymLTatqWGCuZHDznGgnakWKxW");
 
 #[program]
 pub mod adapter_tulip {
