@@ -116,29 +116,25 @@ pub mod adapter_tulip {
                 withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
                 withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
 
-                let accounts = load_remaining_accounts(
+                let withdraw_deposit_tracking_index_array = vec![0, 15, 16, 20, 21, 22, 12, 14, 1];
+                let withdraw_deposit_tracking_accounts = load_remaining_accounts(
                     ctx.remaining_accounts,
-                    vec![0, 15, 16, 20, 21, 22, 12, 14, 1],
+                    withdraw_deposit_tracking_index_array.clone(),
                 );
 
                 let withdraw_deposit_tracking_ix = Instruction {
                     program_id: ctx.accounts.base_program_id.key(),
-                    accounts,
+                    accounts: withdraw_deposit_tracking_accounts,
                     data: withdraw_deposit_tracking_data,
                 };
+                let withdraw_deposit_tracking_account_infos = account_info_array(
+                    ctx.remaining_accounts,
+                    withdraw_deposit_tracking_index_array.clone(),
+                );
                 invoke(
                     &withdraw_deposit_tracking_ix,
-                    &[
-                        ctx.remaining_accounts[0].clone(),
-                        ctx.remaining_accounts[15].clone(),
-                        ctx.remaining_accounts[16].clone(),
-                        ctx.remaining_accounts[20].clone(),
-                        ctx.remaining_accounts[21].clone(),
-                        ctx.remaining_accounts[22].clone(),
-                        ctx.remaining_accounts[12].clone(),
-                        ctx.remaining_accounts[14].clone(),
-                        ctx.remaining_accounts[1].clone(),
-                    ],
+                    &withdraw_deposit_tracking_account_infos
+                        [0..withdraw_deposit_tracking_index_array.len()],
                 )?;
 
                 // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/raydium.rs#L5
@@ -176,29 +172,25 @@ pub mod adapter_tulip {
                 withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
                 withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
 
-                let accounts = load_remaining_accounts(
+                let withdraw_deposit_tracking_index_array = vec![6, 3, 27, 0, 1, 2, 9, 25, 7];
+                let withdraw_deposit_tracking_accounts = load_remaining_accounts(
                     ctx.remaining_accounts,
-                    vec![6, 3, 27, 0, 1, 2, 9, 25, 7],
+                    withdraw_deposit_tracking_index_array.clone(),
                 );
 
                 let withdraw_deposit_tracking_ix = Instruction {
                     program_id: ctx.accounts.base_program_id.key(),
-                    accounts,
+                    accounts: withdraw_deposit_tracking_accounts,
                     data: withdraw_deposit_tracking_data,
                 };
+                let withdraw_deposit_tracking_account_infos = account_info_array(
+                    ctx.remaining_accounts,
+                    withdraw_deposit_tracking_index_array.clone(),
+                );
                 invoke(
                     &withdraw_deposit_tracking_ix,
-                    &[
-                        ctx.remaining_accounts[6].clone(),
-                        ctx.remaining_accounts[3].clone(),
-                        ctx.remaining_accounts[27].clone(),
-                        ctx.remaining_accounts[0].clone(),
-                        ctx.remaining_accounts[1].clone(),
-                        ctx.remaining_accounts[2].clone(),
-                        ctx.remaining_accounts[9].clone(),
-                        ctx.remaining_accounts[25].clone(),
-                        ctx.remaining_accounts[7].clone(),
-                    ],
+                    &withdraw_deposit_tracking_account_infos
+                        [0..withdraw_deposit_tracking_index_array.len()],
                 )?;
 
                 let mut is_double_dip = false;
@@ -282,36 +274,21 @@ pub mod adapter_tulip {
                     sighash("global", "withdraw_orca_vault_remove_liq").try_to_vec()?;
                 remove_liq_data.append(&mut is_double_dip.try_to_vec()?);
 
-                let remove_liq_accounts = load_remaining_accounts(
-                    ctx.remaining_accounts,
-                    vec![6, 7, 8, 10, 4, 5, 16, 17, 28, 21, 22, 23, 26, 27, 30, 25],
-                );
+                let remove_liq_index_array =
+                    vec![6, 7, 8, 10, 4, 5, 16, 17, 28, 21, 22, 23, 26, 27, 30, 25];
+                let remove_liq_accounts =
+                    load_remaining_accounts(ctx.remaining_accounts, remove_liq_index_array.clone());
 
                 let remove_liq_ix = Instruction {
                     program_id: ctx.accounts.base_program_id.key(),
                     accounts: remove_liq_accounts,
                     data: remove_liq_data,
                 };
+                let remove_liq_account_infos =
+                    account_info_array(ctx.remaining_accounts, remove_liq_index_array.clone());
                 invoke(
                     &remove_liq_ix,
-                    &[
-                        ctx.remaining_accounts[6].clone(),
-                        ctx.remaining_accounts[7].clone(),
-                        ctx.remaining_accounts[8].clone(),
-                        ctx.remaining_accounts[10].clone(),
-                        ctx.remaining_accounts[4].clone(),
-                        ctx.remaining_accounts[5].clone(),
-                        ctx.remaining_accounts[16].clone(),
-                        ctx.remaining_accounts[17].clone(),
-                        ctx.remaining_accounts[28].clone(),
-                        ctx.remaining_accounts[21].clone(),
-                        ctx.remaining_accounts[22].clone(),
-                        ctx.remaining_accounts[23].clone(),
-                        ctx.remaining_accounts[26].clone(),
-                        ctx.remaining_accounts[27].clone(),
-                        ctx.remaining_accounts[30].clone(),
-                        ctx.remaining_accounts[25].clone(),
-                    ],
+                    &remove_liq_account_infos[0..remove_liq_index_array.len()],
                 )?;
 
                 (
@@ -598,6 +575,8 @@ impl From<UnsupplyOutputWrapper> for UnsupplyOutputTuple {
 pub enum ErrorCode {
     #[msg("Unsupported Vault Protocol")]
     UnsupportedVaultProtocol,
+    #[msg("Index might out of bound, currently only support 30 addresses")]
+    IndexOutOfBound,
 }
 
 pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
@@ -657,6 +636,49 @@ pub fn load_remaining_accounts<'info>(
                 remaining_accounts[*index].is_signer,
             ))
         }
+    }
+    return accounts;
+}
+
+pub fn account_info_array<'info>(
+    remaining_accounts: &[AccountInfo<'info>],
+    index_array: Vec<usize>,
+) -> [AccountInfo<'info>; 30] {
+    let mut accounts: [AccountInfo<'info>; 30] = [
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+        remaining_accounts[0].clone(),
+    ];
+    for i in 0..index_array.len() {
+        let index = index_array[i];
+        accounts[i] = remaining_accounts[index].clone();
     }
     return accounts;
 }
