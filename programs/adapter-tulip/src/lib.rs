@@ -228,12 +228,14 @@ pub mod adapter_tulip {
                         .append(&mut input_struct.share_amount.try_to_vec()?);
                     withdraw_orca_dd_vault_stage_one_data.append(&mut 0u8.try_to_vec()?);
 
+                    let withdraw_orca_dd_vault_stage_one_index_array = vec![
+                        6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                        26, 27, 28, 29, 30, 31, 32, 33,
+                    ];
+
                     let withdraw_orca_dd_vault_stage_one_accounts = load_remaining_accounts(
                         ctx.remaining_accounts,
-                        vec![
-                            6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-                            24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
-                        ],
+                        withdraw_orca_dd_vault_stage_one_index_array.clone(),
                     );
 
                     let withdraw_orca_dd_vault_stage_one_ix = Instruction {
@@ -241,21 +243,27 @@ pub mod adapter_tulip {
                         accounts: withdraw_orca_dd_vault_stage_one_accounts,
                         data: withdraw_orca_dd_vault_stage_one_data,
                     };
+                    let withdraw_orca_dd_vault_stage_one_account_infos = get_account_info_array(
+                        ctx.remaining_accounts,
+                        withdraw_orca_dd_vault_stage_one_index_array.clone(),
+                    );
                     invoke(
                         &withdraw_orca_dd_vault_stage_one_ix,
-                        &ctx.remaining_accounts[6..34],
+                        &withdraw_orca_dd_vault_stage_one_account_infos
+                            [0..withdraw_orca_dd_vault_stage_one_index_array.len()],
                     )?;
 
                     // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L144
                     let withdraw_orca_dd_vault_stage_two_data =
                         sighash("global", "withdraw_orca_vault_dd_stage_two").try_to_vec()?;
 
+                    let withdraw_orca_dd_vault_stage_two_index_array = vec![
+                        6, 7, 8, 34, 10, 33, 35, 36, 37, 38, 16, 17, 39, 40, 41, 21, 22, 23, 42,
+                        25, 26, 27, 28, 29, 30, 43,
+                    ];
                     let withdraw_orca_dd_vault_stage_two_accounts = load_remaining_accounts(
                         ctx.remaining_accounts,
-                        vec![
-                            6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-                            24, 25, 26, 27, 28, 29, 30, 31, 32,
-                        ],
+                        withdraw_orca_dd_vault_stage_two_index_array.clone(),
                     );
 
                     let withdraw_orca_dd_vault_stage_two_ix = Instruction {
@@ -263,9 +271,14 @@ pub mod adapter_tulip {
                         accounts: withdraw_orca_dd_vault_stage_two_accounts,
                         data: withdraw_orca_dd_vault_stage_two_data,
                     };
+                    let withdraw_orca_dd_vault_stage_two_account_infos = get_account_info_array(
+                        ctx.remaining_accounts,
+                        withdraw_orca_dd_vault_stage_two_index_array.clone(),
+                    );
                     invoke(
                         &withdraw_orca_dd_vault_stage_two_ix,
-                        &ctx.remaining_accounts[6..33],
+                        &withdraw_orca_dd_vault_stage_two_account_infos
+                            [0..withdraw_orca_dd_vault_stage_two_index_array.len()],
                     )?;
                 }
 
