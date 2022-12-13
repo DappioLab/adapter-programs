@@ -232,7 +232,7 @@ pub mod adapter_tulip {
                         ctx.remaining_accounts,
                         vec![
                             6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-                            24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                            24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
                         ],
                     );
 
@@ -243,7 +243,7 @@ pub mod adapter_tulip {
                     };
                     invoke(
                         &withdraw_orca_dd_vault_stage_one_ix,
-                        &ctx.remaining_accounts[6..35],
+                        &ctx.remaining_accounts[6..34],
                     )?;
 
                     // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L144
@@ -254,7 +254,7 @@ pub mod adapter_tulip {
                         ctx.remaining_accounts,
                         vec![
                             6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-                            24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
+                            24, 25, 26, 27, 28, 29, 30, 31, 32,
                         ],
                     );
 
@@ -265,7 +265,7 @@ pub mod adapter_tulip {
                     };
                     invoke(
                         &withdraw_orca_dd_vault_stage_two_ix,
-                        &ctx.remaining_accounts[6..34],
+                        &ctx.remaining_accounts[6..33],
                     )?;
                 }
 
