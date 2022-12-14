@@ -165,37 +165,43 @@ pub mod adapter_tulip {
                 let mut token_b_account_and_balance =
                     load_token_account_and_balance(ctx.remaining_accounts, 5);
 
-                // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/deposit_tracking.rs#L38
-                let mut withdraw_deposit_tracking_data =
-                    sighash("global", "withdraw_deposit_tracking").try_to_vec()?;
-                withdraw_deposit_tracking_data.append(&mut input_struct.share_amount.try_to_vec()?);
-                withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_0.try_to_vec()?);
-                withdraw_deposit_tracking_data.append(&mut input_struct.farm_type_1.try_to_vec()?);
-
-                let withdraw_deposit_tracking_index_array = vec![6, 3, 27, 0, 1, 2, 9, 25, 7];
-                let withdraw_deposit_tracking_accounts = load_remaining_accounts(
-                    ctx.remaining_accounts,
-                    withdraw_deposit_tracking_index_array.clone(),
-                );
-
-                let withdraw_deposit_tracking_ix = Instruction {
-                    program_id: ctx.accounts.base_program_id.key(),
-                    accounts: withdraw_deposit_tracking_accounts,
-                    data: withdraw_deposit_tracking_data,
-                };
-                let withdraw_deposit_tracking_account_infos = get_account_info_array(
-                    ctx.remaining_accounts,
-                    withdraw_deposit_tracking_index_array.clone(),
-                );
-                invoke(
-                    &withdraw_deposit_tracking_ix,
-                    &withdraw_deposit_tracking_account_infos
-                        [0..withdraw_deposit_tracking_index_array.len()],
-                )?;
-
                 let mut is_double_dip = false;
+                // non-double-dip have 33 accounts for `withdraw_deposit_tracking`, `withdraw_orca_vault` and `withdraw_orca_vault_remove_liq`
+                // double-dip have 31 accounts for `withdraw_orca_vault_dd_stage_two` and `withdraw_orca_vault_remove_liq`, currently
+                // `withdraw_deposit_tracking` and `withdraw_orca_vault_dd_stage_one` will be in pre-instructions due to inner instructions
+                // too large issue. If those two instructions add into adapter, double-dip will have 44 accounts and non-double-dip will have no change.
                 if ctx.remaining_accounts.len() == 33 {
-                    // withdraw vault
+                    // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/deposit_tracking.rs#L38
+                    let mut withdraw_deposit_tracking_data =
+                        sighash("global", "withdraw_deposit_tracking").try_to_vec()?;
+                    withdraw_deposit_tracking_data
+                        .append(&mut input_struct.share_amount.try_to_vec()?);
+                    withdraw_deposit_tracking_data
+                        .append(&mut input_struct.farm_type_0.try_to_vec()?);
+                    withdraw_deposit_tracking_data
+                        .append(&mut input_struct.farm_type_1.try_to_vec()?);
+
+                    let withdraw_deposit_tracking_index_array = vec![6, 3, 27, 0, 1, 2, 9, 25, 7];
+                    let withdraw_deposit_tracking_accounts = load_remaining_accounts(
+                        ctx.remaining_accounts,
+                        withdraw_deposit_tracking_index_array.clone(),
+                    );
+
+                    let withdraw_deposit_tracking_ix = Instruction {
+                        program_id: ctx.accounts.base_program_id.key(),
+                        accounts: withdraw_deposit_tracking_accounts,
+                        data: withdraw_deposit_tracking_data,
+                    };
+                    let withdraw_deposit_tracking_account_infos = get_account_info_array(
+                        ctx.remaining_accounts,
+                        withdraw_deposit_tracking_index_array.clone(),
+                    );
+                    invoke(
+                        &withdraw_deposit_tracking_ix,
+                        &withdraw_deposit_tracking_account_infos
+                            [0..withdraw_deposit_tracking_index_array.len()],
+                    )?;
+
                     // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L5
                     let mut withdraw_orca_vault_data =
                         sighash("global", "withdraw_orca_vault").try_to_vec()?;
@@ -218,44 +224,21 @@ pub mod adapter_tulip {
                     };
                     invoke(&withdraw_orca_vault_ix, &ctx.remaining_accounts[6..33])?;
                 } else {
+                    // Due to inner instruction too large issue, will invoke `withdraw_deposit_tracking`
+                    // and `withdraw_orca_vault_dd_stage_one` out of gateway program (still before this instruction).
                     is_double_dip = true;
-                    // withdraw dd vault (two stage)
-                    // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L72
-                    let mut withdraw_orca_dd_vault_stage_one_data =
-                        sighash("global", "withdraw_orca_vault_dd_stage_one").try_to_vec()?;
-                    withdraw_orca_dd_vault_stage_one_data.append(&mut true.try_to_vec()?);
-                    withdraw_orca_dd_vault_stage_one_data
-                        .append(&mut input_struct.share_amount.try_to_vec()?);
-                    withdraw_orca_dd_vault_stage_one_data.append(&mut 0u8.try_to_vec()?);
-
-                    let withdraw_orca_dd_vault_stage_one_accounts = load_remaining_accounts(
-                        ctx.remaining_accounts,
-                        vec![
-                            6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-                            24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
-                        ],
-                    );
-
-                    let withdraw_orca_dd_vault_stage_one_ix = Instruction {
-                        program_id: ctx.accounts.base_program_id.key(),
-                        accounts: withdraw_orca_dd_vault_stage_one_accounts,
-                        data: withdraw_orca_dd_vault_stage_one_data,
-                    };
-                    invoke(
-                        &withdraw_orca_dd_vault_stage_one_ix,
-                        &ctx.remaining_accounts[6..35],
-                    )?;
 
                     // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/orca.rs#L144
                     let withdraw_orca_dd_vault_stage_two_data =
                         sighash("global", "withdraw_orca_vault_dd_stage_two").try_to_vec()?;
 
+                    let withdraw_orca_dd_vault_stage_two_index_array = vec![
+                        6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                        26, 27, 28, 29, 30, 31,
+                    ];
                     let withdraw_orca_dd_vault_stage_two_accounts = load_remaining_accounts(
                         ctx.remaining_accounts,
-                        vec![
-                            6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-                            24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
-                        ],
+                        withdraw_orca_dd_vault_stage_two_index_array.clone(),
                     );
 
                     let withdraw_orca_dd_vault_stage_two_ix = Instruction {
@@ -263,9 +246,14 @@ pub mod adapter_tulip {
                         accounts: withdraw_orca_dd_vault_stage_two_accounts,
                         data: withdraw_orca_dd_vault_stage_two_data,
                     };
+                    let withdraw_orca_dd_vault_stage_two_account_infos = get_account_info_array(
+                        ctx.remaining_accounts,
+                        withdraw_orca_dd_vault_stage_two_index_array.clone(),
+                    );
                     invoke(
                         &withdraw_orca_dd_vault_stage_two_ix,
-                        &ctx.remaining_accounts[6..34],
+                        &withdraw_orca_dd_vault_stage_two_account_infos
+                            [0..withdraw_orca_dd_vault_stage_two_index_array.len()],
                     )?;
                 }
 
