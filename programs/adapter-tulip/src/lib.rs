@@ -167,8 +167,9 @@ pub mod adapter_tulip {
 
                 let mut is_double_dip = false;
                 // non-double-dip have 33 accounts for `withdraw_deposit_tracking`, `withdraw_orca_vault` and `withdraw_orca_vault_remove_liq`
-                // double-dip have 31 accounts for `withdraw_orca_vault_dd_stage_two` and `withdraw_orca_vault_remove_liq`,
-                // `withdraw_deposit_tracking` and `withdraw_orca_vault_dd_stage_one` will be in pre-instructions
+                // double-dip have 31 accounts for `withdraw_orca_vault_dd_stage_two` and `withdraw_orca_vault_remove_liq`, currently
+                // `withdraw_deposit_tracking` and `withdraw_orca_vault_dd_stage_one` will be in pre-instructions due to inner instructions
+                // too large issue. If those two instructions add into adapter, double-dip will have 44 accounts and non-double-dip will have no change.
                 if ctx.remaining_accounts.len() == 33 {
                     // reference: https://github.com/sol-farm/tulipv2-sdk/blob/main/vaults/src/instructions/deposit_tracking.rs#L38
                     let mut withdraw_deposit_tracking_data =
