@@ -19,6 +19,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "adapter-genopets-staking"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+]
+
+[[package]]
 name = "adapter-katana"
 version = "0.1.0"
 dependencies = [

@@ -1,6 +1,6 @@
 {
   "name": "@dappio-wonderland/adapter-idls",
-  "version": "0.2.1",
+  "version": "0.2.1-test.2",
   "description": "Dappio Adapter IDLs: The IDL files of Dappio Adapters",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
