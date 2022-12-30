@@ -7,10 +7,12 @@ use anchor_lang::solana_program::{
 };
 use anchor_spl::token::TokenAccount;
 
-declare_id!("ADPTPxbHbEBo9A8E53P2PZnmw3ZYJuwc8ArQQkbJtqhx");
+declare_id!("4XnyVwkN5dR7Rinnys59qMqLjhxytpv4JbFLJuXe5mKk");
 
 #[program]
 pub mod adapter_lido {
+    use anchor_lang::solana_program::program::invoke_signed;
+
     use super::*;
 
     pub fn deposit<'a, 'b, 'c, 'info>(
@@ -117,7 +119,7 @@ pub mod adapter_lido {
             &user_account.key(),
             &ctx.remaining_accounts[6].key(),
         );
-        invoke(&deactivate_ix, &vec![user_account.clone()])?;
+        invoke_signed(&deactivate_ix, &vec![user_account.clone()], &[&[&user_account.key().to_bytes(), &input_struct.gateway_key.to_bytes()]])?;
 
         let lp_amount = user_account
             .lamports()
@@ -157,6 +159,7 @@ pub struct WithdrawInputWrapper {
     pub amount: u64,
     /// Index of the Heaviest Validator.
     pub validator_index: u32,
+    pub gateway_key: Pubkey,
 }
 
 // OutputWrapper needs to take up all the space of 32 bytes
