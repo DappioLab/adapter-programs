@@ -28,17 +28,22 @@ pub mod adapter_jupiter {
         msg!("Input: {:?}", input_struct);
 
         let mut last_index: usize = 13;
-        for index in (0..(input_struct.swap_config.len() - 1)).rev() {
-            if input_struct.swap_config[index] != 0 {
-                last_index = index;
-                break;
-            }
-        }
+        let mut start_index: usize = 1;
+        if input_struct.swap_config[0] > 0 && input_struct.swap_config[0] < 13 {
+            last_index = input_struct.swap_config[0] as usize;
+        } else if input_struct.swap_config[0] == 0 {
+            start_index = 0;
+        };
+
         let swap_accounts = load_remaining_accounts(ctx.remaining_accounts, None);
 
         let mut swap_data = vec![];
         swap_data.append(&mut discriminator.try_to_vec()?);
-        swap_data.extend(&mut input_struct.swap_config[0..=last_index].iter().cloned());
+        swap_data.extend(
+            &mut input_struct.swap_config[start_index..=last_index]
+                .iter()
+                .cloned(),
+        );
         swap_data.append(&mut input_struct.in_amount.try_to_vec()?);
         swap_data.append(&mut input_struct.out_amount.try_to_vec()?);
         swap_data.append(&mut input_struct.slippage_bps.try_to_vec()?);
