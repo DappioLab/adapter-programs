@@ -9,6 +9,8 @@ use anchor_spl::token::TokenAccount;
 
 declare_id!("ADPT8iF4A7BSUWQ8AsVwmcod2suFzA4bpYpJj7kUWK3E");
 
+const SWAP_CONFIG_SIZE: usize = 30;
+
 #[program]
 pub mod adapter_jupiter {
     use super::*;
@@ -27,9 +29,9 @@ pub mod adapter_jupiter {
         let input_struct = SwapInputWrapper::deserialize(&mut input_bytes)?;
         msg!("Input: {:?}", input_struct);
 
-        let mut last_index: usize = 13;
+        let mut last_index: usize = SWAP_CONFIG_SIZE - 1;
         let mut start_index: usize = 1;
-        if input_struct.swap_config[0] > 0 && input_struct.swap_config[0] < 13 {
+        if input_struct.swap_config[0] > 0 && input_struct.swap_config[0] < SWAP_CONFIG_SIZE as u8 {
             last_index = input_struct.swap_config[0] as usize;
         } else if input_struct.swap_config[0] == 0 {
             start_index = 0;
@@ -86,7 +88,7 @@ pub struct SwapInputWrapper {
     pub in_amount: u64,
     pub out_amount: u64,
     pub slippage_bps: u16,
-    pub swap_config: [u8; 14],
+    pub swap_config: [u8; SWAP_CONFIG_SIZE],
 }
 
 // OutputWrapper needs to take up all the space of 32 bytes

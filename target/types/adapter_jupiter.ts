@@ -47,7 +47,7 @@ export type AdapterJupiter = {
             "type": {
               "array": [
                 "u8",
-                14
+                30
               ]
             }
           }
@@ -130,7 +130,7 @@ export const IDL: AdapterJupiter = {
             "type": {
               "array": [
                 "u8",
-                14
+                30
               ]
             }
           }
