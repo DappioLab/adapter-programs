@@ -58,15 +58,16 @@ pub mod adapter_jupiter {
 
         invoke(&ix, ctx.remaining_accounts)?;
 
-        // Return Result
-        let swap_result = SwapOutputWrapper {
+        // Wrap Output
+        let output_struct = SwapOutputWrapper {
             swap_out_amount: dest_token_account_and_balance.get_balance_change(),
             ..Default::default()
         };
-        let mut buffer: Vec<u8> = Vec::new();
-        swap_result.serialize(&mut buffer).unwrap();
+        let mut output: Vec<u8> = Vec::new();
+        output_struct.serialize(&mut output).unwrap();
 
-        anchor_lang::solana_program::program::set_return_data(&buffer);
+        anchor_lang::solana_program::program::set_return_data(&output);
+        msg!("Output: {:?}", output_struct);
 
         Ok(())
     }
