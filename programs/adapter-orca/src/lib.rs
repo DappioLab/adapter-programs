@@ -1,10 +1,6 @@
+use adapter_common::{load_remaining_accounts, load_token_account_and_balance, ErrorCode};
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{
-    instruction::{AccountMeta, Instruction},
-    program::invoke,
-    pubkey::Pubkey,
-};
-use anchor_spl::token::TokenAccount;
+use anchor_lang::solana_program::{instruction::Instruction, program::invoke, pubkey::Pubkey};
 
 declare_id!("ADPTTyNqameXftbqsxwXhbs7v7XP8E82YMaUStPgjmU5");
 
@@ -320,14 +316,6 @@ pub struct Action<'info> {
     pub base_program_id: AccountInfo<'info>,
 }
 
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Unsupported PoolDirection")]
-    UnsupportedPoolDirection,
-    #[msg("Unsupported Action")]
-    UnsupportedAction,
-}
-
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct AddLiquidityInputWrapper {
     pub token_in_amount: u64,
@@ -454,58 +442,4 @@ impl From<HarvestOutputWrapper> for HarvestOutputTuple {
         } = result;
         (reward_amount, dummy_2, dummy_3, dummy_4)
     }
-}
-
-pub fn load_token_account_and_balance<'info>(
-    remaining_accounts: &[AccountInfo<'info>],
-    account_index: usize,
-) -> TokenAccountAndBalance<'info> {
-    let token_account_info = &remaining_accounts[account_index];
-    let token_account = Account::<TokenAccount>::try_from(token_account_info).unwrap();
-    let balance_before = token_account.amount.clone();
-    return TokenAccountAndBalance {
-        token_accout: token_account,
-        balance_before: balance_before,
-    };
-}
-
-pub struct TokenAccountAndBalance<'info> {
-    token_accout: Account<'info, TokenAccount>,
-    balance_before: u64,
-}
-
-impl<'info> TokenAccountAndBalance<'info> {
-    pub fn get_balance_change(&mut self) -> u64 {
-        self.token_accout.reload().unwrap();
-        let balance_before = self.balance_before;
-        let balance_after = self.token_accout.amount;
-        if balance_after > balance_before {
-            balance_after.checked_sub(balance_before).unwrap()
-        } else if balance_after == balance_before {
-            0_u64
-        } else {
-            balance_before.checked_sub(balance_after).unwrap()
-        }
-    }
-}
-
-pub fn load_remaining_accounts<'info>(
-    remaining_accounts: &[AccountInfo<'info>],
-    index_array: Vec<usize>,
-) -> Vec<AccountMeta> {
-    let mut accounts: Vec<AccountMeta> = vec![];
-    for index in index_array.iter() {
-        if remaining_accounts[*index].is_writable {
-            accounts.push(AccountMeta::new(
-                remaining_accounts[*index].key(),
-                remaining_accounts[*index].is_signer,
-            ))
-        } else {
-            accounts.push(AccountMeta::new_readonly(
-                remaining_accounts[*index].key(),
-                remaining_accounts[*index].is_signer,
-            ))
-        }
-    }
-    return accounts;
 }

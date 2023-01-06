@@ -1,6 +1,6 @@
+use adapter_common::{sighash, ErrorCode};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{
-    hash::hash,
     instruction::{AccountMeta, Instruction},
     program::invoke,
     pubkey::Pubkey,
@@ -539,20 +539,4 @@ impl From<HarvestOutputWrapper> for HarvestOutputTuple {
         } = result;
         (dummy_1, dummy_2, dummy_3, dummy_4)
     }
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Unsupported PoolDirection")]
-    UnsupportedPoolDirection,
-    #[msg("Unsupported Action")]
-    UnsupportedAction,
-}
-
-pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
-    let preimage = format!("{}:{}", namespace, name);
-    let mut sighash = [0u8; 8];
-
-    sighash.copy_from_slice(&hash(preimage.as_bytes()).to_bytes()[..8]);
-    sighash
 }

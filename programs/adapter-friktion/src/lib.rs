@@ -1,11 +1,6 @@
+use adapter_common::{load_remaining_accounts, load_token_account_and_balance, sighash};
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{
-    hash::hash,
-    instruction::{AccountMeta, Instruction},
-    program::invoke,
-    pubkey::Pubkey,
-};
-use anchor_spl::token::TokenAccount;
+use anchor_lang::solana_program::{instruction::Instruction, program::invoke, pubkey::Pubkey};
 
 declare_id!("ADPTzbsaBdXA3FqXoPHjaTjPfh9kadxxFKxonZihP1Ji");
 
@@ -28,27 +23,13 @@ pub mod adapter_friktion {
 
         let mut deposit_data = sighash("global", "deposit").to_vec();
         deposit_data.append(&mut input_struct.deposit_amount.try_to_vec()?);
-        let deposit_accounts = vec![
-            AccountMeta::new(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[9].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[10].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[11].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[12].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[13].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[14].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[15].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[16].key(), false),
-        ];
+        let deposit_accounts = load_remaining_accounts(
+            ctx.remaining_accounts,
+            vec![
+                0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+            ],
+        );
+
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
             accounts: deposit_accounts,
@@ -87,28 +68,12 @@ pub mod adapter_friktion {
 
         let mut data = sighash("global", "withdraw").to_vec();
         data.append(&mut input_struct.share_amount.try_to_vec()?);
-
-        let accounts = vec![
-            AccountMeta::new(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[9].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[10].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[11].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[12].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[13].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[14].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[15].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[16].key(), false),
-        ];
+        let accounts = load_remaining_accounts(
+            ctx.remaining_accounts,
+            vec![
+                0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+            ],
+        );
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -147,19 +112,11 @@ pub mod adapter_friktion {
             load_token_account_and_balance(ctx.remaining_accounts, 5);
 
         let data = sighash("global", "cancel_pending_withdrawal").to_vec();
-        let accounts = vec![
-            AccountMeta::new(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[9].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[10].key(), false),
-        ];
+
+        let accounts = load_remaining_accounts(
+            ctx.remaining_accounts,
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        );
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -198,19 +155,10 @@ pub mod adapter_friktion {
             load_token_account_and_balance(ctx.remaining_accounts, 4);
 
         let data = sighash("global", "cancel_pending_deposit").to_vec();
-        let accounts = vec![
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[9].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[10].key(), false),
-        ];
+        let accounts = load_remaining_accounts(
+            ctx.remaining_accounts,
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        );
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -249,19 +197,11 @@ pub mod adapter_friktion {
             load_token_account_and_balance(ctx.remaining_accounts, 5);
 
         let data = sighash("global", "claim_pending_withdrawal").to_vec();
-        let accounts = vec![
-            AccountMeta::new(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[9].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[10].key(), false),
-        ];
+
+        let accounts = load_remaining_accounts(
+            ctx.remaining_accounts,
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        );
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -300,18 +240,8 @@ pub mod adapter_friktion {
             load_token_account_and_balance(ctx.remaining_accounts, 4);
 
         let data = sighash("global", "claim_pending_deposit").to_vec();
-        let accounts = vec![
-            AccountMeta::new(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[8].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[9].key(), false),
-        ];
+        let accounts =
+            load_remaining_accounts(ctx.remaining_accounts, vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
         let ix = Instruction {
             program_id: ctx.accounts.base_program_id.key(),
@@ -497,51 +427,5 @@ impl From<FinalizeWithdrawOutputWrapper> for FinalizeWithdrawOutputTuple {
             dummy_4,
         } = result;
         (withdraw_amount, dummy_2, dummy_3, dummy_4)
-    }
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Unsupported Action")]
-    UnsupportedAction,
-}
-
-pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
-    let preimage = format!("{}:{}", namespace, name);
-    let mut sighash = [0u8; 8];
-
-    sighash.copy_from_slice(&hash(preimage.as_bytes()).to_bytes()[..8]);
-    sighash
-}
-
-pub fn load_token_account_and_balance<'info>(
-    remaining_accounts: &[AccountInfo<'info>],
-    account_index: usize,
-) -> TokenAccountAndBalance<'info> {
-    let token_account_info = &remaining_accounts[account_index];
-    let token_account = Account::<TokenAccount>::try_from(token_account_info).unwrap();
-    let balance_before = token_account.amount.clone();
-    return TokenAccountAndBalance {
-        token_accout: token_account,
-        balance_before: balance_before,
-    }; // (token_account.clone(), token_account.amount.clone());
-}
-
-pub struct TokenAccountAndBalance<'info> {
-    token_accout: Account<'info, TokenAccount>,
-    balance_before: u64,
-}
-impl<'info> TokenAccountAndBalance<'info> {
-    pub fn get_balance_change(&mut self) -> u64 {
-        self.token_accout.reload().unwrap();
-        let balance_before = self.balance_before;
-        let balance_after = self.token_accout.amount;
-        if balance_after > balance_before {
-            balance_after.checked_sub(balance_before).unwrap()
-        } else if balance_after == balance_before {
-            0_u64
-        } else {
-            balance_before.checked_sub(balance_after).unwrap()
-        }
     }
 }

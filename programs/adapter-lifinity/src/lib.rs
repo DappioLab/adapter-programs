@@ -1,6 +1,6 @@
+use adapter_common::sighash;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{
-    hash::hash,
     instruction::{AccountMeta, Instruction},
     program::invoke,
     pubkey::Pubkey,
@@ -379,12 +379,4 @@ impl From<RemoveLiquidityOutputWrapper> for RemoveLiquidityOutputTuple {
         } = result;
         (token_a_amount, token_b_amount, lp_amount, dummy_4)
     }
-}
-
-pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
-    let preimage = format!("{}:{}", namespace, name);
-    let mut sighash = [0u8; 8];
-
-    sighash.copy_from_slice(&hash(preimage.as_bytes()).to_bytes()[..8]);
-    sighash
 }
