@@ -306,18 +306,6 @@ export type AdapterSaber = {
         ]
       }
     }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedPoolDirection",
-      "msg": "Unsupported PoolDirection"
-    },
-    {
-      "code": 6001,
-      "name": "UnsupportedAction",
-      "msg": "Unsupported Action"
-    }
   ]
 };
 
@@ -628,18 +616,6 @@ export const IDL: AdapterSaber = {
           }
         ]
       }
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedPoolDirection",
-      "msg": "Unsupported PoolDirection"
-    },
-    {
-      "code": 6001,
-      "name": "UnsupportedAction",
-      "msg": "Unsupported Action"
     }
   ]
 };

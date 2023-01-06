@@ -274,18 +274,6 @@ export type AdapterNftFinance = {
         ]
       }
     }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedPoolDirection",
-      "msg": "Unsupported PoolDirection"
-    },
-    {
-      "code": 6001,
-      "name": "UnsupportedAction",
-      "msg": "Unsupported Action"
-    }
   ]
 };
 
@@ -564,18 +552,6 @@ export const IDL: AdapterNftFinance = {
           }
         ]
       }
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedPoolDirection",
-      "msg": "Unsupported PoolDirection"
-    },
-    {
-      "code": 6001,
-      "name": "UnsupportedAction",
-      "msg": "Unsupported Action"
     }
   ]
 };
