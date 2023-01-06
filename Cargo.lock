@@ -3,6 +3,14 @@
 version = 3
 
 [[package]]
+name = "adapter-common"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+]
+
+[[package]]
 name = "adapter-francium"
 version = "0.1.0"
 dependencies = [
@@ -14,16 +22,16 @@ dependencies = [
 name = "adapter-friktion"
 version = "0.1.0"
 dependencies = [
+ "adapter-common",
  "anchor-lang",
- "anchor-spl",
 ]
 
 [[package]]
 name = "adapter-katana"
 version = "0.1.0"
 dependencies = [
+ "adapter-common",
  "anchor-lang",
- "anchor-spl",
 ]
 
 [[package]]
@@ -38,6 +46,7 @@ dependencies = [
 name = "adapter-lifinity"
 version = "0.1.0"
 dependencies = [
+ "adapter-common",
  "anchor-lang",
  "anchor-spl",
 ]
@@ -46,14 +55,7 @@ dependencies = [
 name = "adapter-nft-finance"
 version = "0.1.0"
 dependencies = [
- "anchor-lang",
- "anchor-spl",
-]
-
-[[package]]
-name = "adapter-orca"
-version = "0.1.0"
-dependencies = [
+ "adapter-common",
  "anchor-lang",
  "anchor-spl",
 ]
@@ -62,6 +64,7 @@ dependencies = [
 name = "adapter-raydium"
 version = "0.1.0"
 dependencies = [
+ "adapter-common",
  "anchor-lang",
  "anchor-spl",
 ]
@@ -70,6 +73,7 @@ dependencies = [
 name = "adapter-saber"
 version = "0.1.0"
 dependencies = [
+ "adapter-common",
  "anchor-lang",
  "anchor-spl",
 ]
@@ -86,6 +90,7 @@ dependencies = [
 name = "adapter-tulip"
 version = "0.1.0"
 dependencies = [
+ "adapter-common",
  "anchor-lang",
  "anchor-spl",
  "arrayref",
@@ -100,6 +105,14 @@ dependencies = [
  "tulip-derivative",
  "type-layout",
  "uint",
+]
+
+[[package]]
+name = "adapter_orca"
+version = "0.1.0"
+dependencies = [
+ "adapter-common",
+ "anchor-lang",
 ]
 
 [[package]]
