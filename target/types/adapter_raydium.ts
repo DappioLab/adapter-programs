@@ -880,18 +880,6 @@ export type AdapterRaydium = {
         ]
       }
     }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedPoolDirection",
-      "msg": "Unsupported PoolDirection"
-    },
-    {
-      "code": 6001,
-      "name": "UnsupportedVersion",
-      "msg": "Unsupported Action Version"
-    }
   ]
 };
 
@@ -1776,18 +1764,6 @@ export const IDL: AdapterRaydium = {
           }
         ]
       }
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedPoolDirection",
-      "msg": "Unsupported PoolDirection"
-    },
-    {
-      "code": 6001,
-      "name": "UnsupportedVersion",
-      "msg": "Unsupported Action Version"
     }
   ]
 };

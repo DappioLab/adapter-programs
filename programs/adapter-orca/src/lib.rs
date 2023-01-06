@@ -1,15 +1,13 @@
+use adapter_common::{load_remaining_accounts, load_token_account_and_balance, ErrorCode};
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{
-    instruction::{AccountMeta, Instruction},
-    program::invoke,
-    pubkey::Pubkey,
-};
-use anchor_spl::token::TokenAccount;
+use anchor_lang::solana_program::{instruction::Instruction, program::invoke, pubkey::Pubkey};
 
 declare_id!("ADPTTyNqameXftbqsxwXhbs7v7XP8E82YMaUStPgjmU5");
 
 #[program]
 pub mod adapter_orca {
+    use std::vec;
+
     use super::*;
 
     pub fn add_liquidity<'a, 'b, 'c, 'info>(
@@ -22,24 +20,14 @@ pub mod adapter_orca {
         msg!("Input: {:?}", input_struct);
 
         // Use remaining accounts
-        let lp_token_account_info = ctx.remaining_accounts[7].clone();
-        let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
-        let lp_token_amount_before = lp_token_account.amount;
-
+        let mut lp_token_account_and_balance =
+            load_token_account_and_balance(ctx.remaining_accounts, 7);
         // Get the data from input_struct
         let pool_token_in_amount = input_struct.token_in_amount;
+        // Load Ix accounts
+        let add_lp_accounts =
+            load_remaining_accounts(ctx.remaining_accounts, vec![0, 1, 2, 3, 4, 5, 6, 7, 8]);
 
-        let add_lp_accounts = vec![
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), true),
-            AccountMeta::new(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[8].key(), false),
-        ];
         // Build Ix Data
         const ADD_LP_IX: u8 = 4;
         let minimal_receive: u64 = 0;
@@ -56,16 +44,9 @@ pub mod adapter_orca {
 
         invoke(&ix, ctx.remaining_accounts)?;
 
-        lp_token_account.reload()?;
-        let lp_token_amount_after = lp_token_account.amount;
-        let lp_amount = lp_token_amount_after
-            .checked_sub(lp_token_amount_before)
-            .unwrap();
-
-        msg!("lp_amount: {}", lp_amount.to_string());
         // Wrap Output
         let output_struct = AddLiquidityOutputWrapper {
-            lp_amount,
+            lp_amount: lp_token_account_and_balance.get_balance_change(),
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -92,127 +73,76 @@ pub mod adapter_orca {
         let lp_amount = input_struct.lp_amount;
 
         // Use remaining accounts
-        let lp_token_account_info = ctx.remaining_accounts[7].clone();
-        let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
-        let lp_token_amount_before = lp_token_account.amount;
-
+        let mut lp_token_account_and_balance =
+            load_token_account_and_balance(ctx.remaining_accounts, 4);
         msg!("lp_amount: {}", lp_amount.to_string());
-        let (ix, token_a_amount_before, token_b_amount_before) = match input_struct.action {
-            // RemoveLiquidity
-            2 => {
-                const REMOVE_LP_IX: u8 = 3;
-                let remove_lp_accounts = vec![
-                    AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
-                    AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
-                    AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), true),
-                    AccountMeta::new(ctx.remaining_accounts[3].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[4].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[9].key(), false),
-                    AccountMeta::new_readonly(ctx.remaining_accounts[10].key(), false),
-                ];
-                let token_a_account_amount =
-                    Account::<TokenAccount>::try_from(&ctx.remaining_accounts[7].clone())
-                        .unwrap()
-                        .amount;
-                let token_b_account_amount =
-                    Account::<TokenAccount>::try_from(&ctx.remaining_accounts[8].clone())
-                        .unwrap()
-                        .amount;
+        let (ix, mut token_a_account_and_balance, token_b_account_and_balance) =
+            match input_struct.action {
+                // RemoveLiquidity
+                2 => {
+                    const REMOVE_LP_IX: u8 = 3;
+                    let remove_lp_accounts = load_remaining_accounts(
+                        ctx.remaining_accounts,
+                        vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    );
 
-                let minimal_receive: u64 = 0;
+                    let minimal_receive: u64 = 0;
 
-                let mut remove_lp_data = vec![];
-                remove_lp_data.append(&mut REMOVE_LP_IX.to_le_bytes().to_vec());
-                remove_lp_data.append(&mut lp_amount.to_le_bytes().to_vec());
-                remove_lp_data.append(&mut minimal_receive.to_le_bytes().to_vec());
-                remove_lp_data.append(&mut minimal_receive.to_le_bytes().to_vec());
+                    let mut remove_lp_data = vec![];
+                    remove_lp_data.append(&mut REMOVE_LP_IX.to_le_bytes().to_vec());
+                    remove_lp_data.append(&mut lp_amount.to_le_bytes().to_vec());
+                    remove_lp_data.append(&mut minimal_receive.to_le_bytes().to_vec());
+                    remove_lp_data.append(&mut minimal_receive.to_le_bytes().to_vec());
 
-                (
-                    Instruction {
-                        program_id: ctx.accounts.base_program_id.key(),
-                        accounts: remove_lp_accounts,
-                        data: remove_lp_data,
-                    },
-                    token_a_account_amount,
-                    token_b_account_amount,
-                )
-            }
-            // RemoveLiquiditySingle
-            3 => {
-                const REMOVE_LP_IX: u8 = 5;
-                let remove_lp_accounts = vec![
-                    AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), false),
-                    AccountMeta::new_readonly(ctx.remaining_accounts[1].key(), false),
-                    AccountMeta::new_readonly(ctx.remaining_accounts[2].key(), true),
-                    AccountMeta::new(ctx.remaining_accounts[3].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[4].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-                    AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-                    AccountMeta::new_readonly(ctx.remaining_accounts[9].key(), false),
-                ];
-                let minimal_receive: u64 = 1;
+                    (
+                        Instruction {
+                            program_id: ctx.accounts.base_program_id.key(),
+                            accounts: remove_lp_accounts,
+                            data: remove_lp_data,
+                        },
+                        load_token_account_and_balance(ctx.remaining_accounts, 7),
+                        Some(load_token_account_and_balance(ctx.remaining_accounts, 8)),
+                    )
+                }
+                // RemoveLiquiditySingle
+                3 => {
+                    const REMOVE_LP_IX: u8 = 5;
+                    let remove_lp_accounts = load_remaining_accounts(
+                        ctx.remaining_accounts,
+                        vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                    );
 
-                let mut remove_lp_data = vec![];
-                remove_lp_data.append(&mut REMOVE_LP_IX.to_le_bytes().to_vec());
-                remove_lp_data.append(&mut minimal_receive.to_le_bytes().to_vec());
-                remove_lp_data.append(&mut lp_amount.to_le_bytes().to_vec());
-                let (token_a_amount_before, token_b_amount_before) = (
-                    Account::<TokenAccount>::try_from(&ctx.remaining_accounts[7].clone())
-                        .unwrap()
-                        .amount,
-                    0_u64,
-                );
+                    let minimal_receive: u64 = 1;
 
-                (
-                    Instruction {
-                        program_id: ctx.accounts.base_program_id.key(),
-                        accounts: remove_lp_accounts,
-                        data: remove_lp_data,
-                    },
-                    token_a_amount_before,
-                    token_b_amount_before,
-                )
-            }
-            _ => {
-                return Err(ErrorCode::UnsupportedAction.into());
-            }
-        };
+                    let mut remove_lp_data = vec![];
+                    remove_lp_data.append(&mut REMOVE_LP_IX.to_le_bytes().to_vec());
+                    remove_lp_data.append(&mut minimal_receive.to_le_bytes().to_vec());
+                    remove_lp_data.append(&mut lp_amount.to_le_bytes().to_vec());
+                    (
+                        Instruction {
+                            program_id: ctx.accounts.base_program_id.key(),
+                            accounts: remove_lp_accounts,
+                            data: remove_lp_data,
+                        },
+                        load_token_account_and_balance(ctx.remaining_accounts, 7),
+                        None,
+                    )
+                }
+                _ => {
+                    return Err(ErrorCode::UnsupportedAction.into());
+                }
+            };
 
         invoke(&ix, ctx.remaining_accounts)?;
 
-        // Load lp amount change
-        lp_token_account.reload();
-        let lp_amount = lp_token_amount_before
-            .checked_sub(lp_token_account.amount)
-            .unwrap();
-
-        // Load Token A amount change
-        let a_out_amount = Account::<TokenAccount>::try_from(&ctx.remaining_accounts[7].clone())
-            .unwrap()
-            .amount
-            .checked_sub(token_a_amount_before)
-            .unwrap();
-
-        // Load Token B amount change only for both side
-        let b_out_amount = match input_struct.action {
-            2 => Account::<TokenAccount>::try_from(&ctx.remaining_accounts[8].clone())
-                .unwrap()
-                .amount
-                .checked_sub(token_b_amount_before)
-                .unwrap(),
-            _ => 0_u64,
-        };
         // Wrap Output
         let output_struct = RemoveLiquidityOutputWrapper {
-            token_a_out_amount: a_out_amount,
-            token_b_out_amount: b_out_amount,
-            lp_amount: lp_amount,
+            token_a_out_amount: token_a_account_and_balance.get_balance_change(),
+            token_b_out_amount: match token_b_account_and_balance {
+                Some(mut i) => i.get_balance_change(),
+                None => 0_u64,
+            },
+            lp_amount: lp_token_account_and_balance.get_balance_change(),
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -238,28 +168,16 @@ pub mod adapter_orca {
         let lp_amount = input_struct.lp_amount;
 
         // Use remaining accounts
-        let lp_token_account_info = ctx.remaining_accounts[1].clone();
-        let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
-        let lp_token_amount_before = lp_token_account.amount;
+        let mut lp_token_account_and_balance =
+            load_token_account_and_balance(ctx.remaining_accounts, 1);
 
-        let share_token_account_info = ctx.remaining_accounts[5].clone();
-        let mut share_token_account = Account::<TokenAccount>::try_from(&share_token_account_info)?;
-        let share_token_amount_before = share_token_account.amount;
+        let mut share_token_account_and_balance =
+            load_token_account_and_balance(ctx.remaining_accounts, 5);
 
-        let stake_accounts = vec![
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[3].key(), true),
-            AccountMeta::new(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[9].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[10].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[11].key(), false),
-        ];
+        let stake_accounts = load_remaining_accounts(
+            ctx.remaining_accounts,
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        );
 
         const STAKE_IX: u8 = 2;
         let mut stake_data = vec![];
@@ -274,23 +192,10 @@ pub mod adapter_orca {
 
         invoke(&ix, ctx.remaining_accounts)?;
 
-        // Load lp amount change
-        lp_token_account.reload();
-        let lp_amount = lp_token_amount_before
-            .checked_sub(lp_token_account.amount)
-            .unwrap();
-
-        // Load share amount change
-        share_token_account.reload();
-        let share_amount = share_token_account
-            .amount
-            .checked_sub(share_token_amount_before)
-            .unwrap();
-
         // Wrap Output
         let output_struct = StakeOutputWrapper {
-            share_amount: share_amount,
-            lp_amount: lp_amount,
+            share_amount: share_token_account_and_balance.get_balance_change(),
+            lp_amount: lp_token_account_and_balance.get_balance_change(),
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -318,28 +223,15 @@ pub mod adapter_orca {
         msg!("lp_amount: {}", lp_amount.to_string());
 
         // Use remaining accounts
-        let lp_token_account_info = ctx.remaining_accounts[1].clone();
-        let mut lp_token_account = Account::<TokenAccount>::try_from(&lp_token_account_info)?;
-        let lp_token_amount_before = lp_token_account.amount;
+        let mut lp_token_account_and_balance =
+            load_token_account_and_balance(ctx.remaining_accounts, 1);
 
-        let share_token_account_info = ctx.remaining_accounts[4].clone();
-        let mut share_token_account = Account::<TokenAccount>::try_from(&share_token_account_info)?;
-        let share_token_amount_before = share_token_account.amount;
-
-        let unstake_accounts = vec![
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[5].key(), true),
-            AccountMeta::new(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[7].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[8].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[9].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[10].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[11].key(), false),
-        ];
+        let mut share_token_account_and_balance =
+            load_token_account_and_balance(ctx.remaining_accounts, 4);
+        let unstake_accounts = load_remaining_accounts(
+            ctx.remaining_accounts,
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        );
 
         const UNSTAKE_IX: u8 = 3;
         let mut unstake_data = vec![];
@@ -354,24 +246,10 @@ pub mod adapter_orca {
 
         invoke(&ix, ctx.remaining_accounts)?;
 
-        lp_token_account.reload();
-        // Load lp amount change
-        lp_token_account.reload();
-        let lp_amount = lp_token_account
-            .amount
-            .checked_sub(lp_token_amount_before)
-            .unwrap();
-
-        // Load share amount change
-        share_token_account.reload();
-        let share_amount = share_token_amount_before
-            .checked_sub(share_token_account.amount)
-            .unwrap();
-
         // Wrap Output
         let output_struct = UnstakeOutputWrapper {
-            share_amount: share_amount,
-            lp_amount: lp_amount,
+            share_amount: share_token_account_and_balance.get_balance_change(),
+            lp_amount: lp_token_account_and_balance.get_balance_change(),
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -390,12 +268,9 @@ pub mod adapter_orca {
         input: Vec<u8>,
     ) -> Result<()> {
         // Use remaining accounts
-        let reward_token_account_info = ctx.remaining_accounts[5].clone();
-        let mut reward_token_account =
-            Account::<TokenAccount>::try_from(&reward_token_account_info)?;
-        let reward_token_amount_before = reward_token_account.amount;
+        let mut reward_account_and_balance =
+            load_token_account_and_balance(ctx.remaining_accounts, 1);
 
-        // Get Input
         let mut input_bytes = &input[..];
         let input_struct = HarvestInputWrapper::deserialize(&mut input_bytes)?;
 
@@ -403,16 +278,8 @@ pub mod adapter_orca {
 
         // Harvest
         let harvest_ix: u8 = 4;
-        let harvest_accounts = vec![
-            AccountMeta::new_readonly(ctx.remaining_accounts[0].key(), true),
-            AccountMeta::new(ctx.remaining_accounts[1].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[2].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[3].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[4].key(), false),
-            AccountMeta::new(ctx.remaining_accounts[5].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[6].key(), false),
-            AccountMeta::new_readonly(ctx.remaining_accounts[7].key(), false),
-        ];
+        let harvest_accounts =
+            load_remaining_accounts(ctx.remaining_accounts, vec![0, 1, 2, 3, 4, 5, 6, 7]);
 
         let mut harvest_data = vec![];
         harvest_data.push(harvest_ix);
@@ -424,16 +291,9 @@ pub mod adapter_orca {
 
         invoke(&ix, ctx.remaining_accounts)?;
 
-        // Load reward amount change
-        reward_token_account.reload();
-        let reward_amount = reward_token_account
-            .amount
-            .checked_sub(reward_token_amount_before)
-            .unwrap();
-
         // Wrap Output
         let output_struct = HarvestOutputWrapper {
-            reward_amount: reward_amount,
+            reward_amount: reward_account_and_balance.get_balance_change(),
             ..Default::default()
         };
         let mut output: Vec<u8> = Vec::new();
@@ -454,14 +314,6 @@ pub struct Action<'info> {
     pub gateway_authority: Signer<'info>,
     /// CHECK: Safe
     pub base_program_id: AccountInfo<'info>,
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Unsupported PoolDirection")]
-    UnsupportedPoolDirection,
-    #[msg("Unsupported Action")]
-    UnsupportedAction,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]

@@ -1,11 +1,10 @@
+use adapter_common::{load_token_account_and_balance, sighash};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{
-    hash::hash,
     instruction::{AccountMeta, Instruction},
     program::invoke,
     pubkey::Pubkey,
 };
-use anchor_spl::token::TokenAccount;
 
 declare_id!("ADPTwDKJTizC3V8gZXDxt5uLjJv4pBnh1nTTf9dZJnS2");
 
@@ -293,20 +292,6 @@ pub struct GatewayStateWrapper {
     pub pool_direction: u8,
 }
 
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Unsupported Action")]
-    UnsupportedAction,
-}
-
-pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
-    let preimage = format!("{}:{}", namespace, name);
-    let mut sighash = [0u8; 8];
-
-    sighash.copy_from_slice(&hash(preimage.as_bytes()).to_bytes()[..8]);
-    sighash
-}
-
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, Default)]
 pub struct InitiateDepositInputWrapper {
     pub deposit_amount: u64,
@@ -436,37 +421,5 @@ impl From<FinalizeWithdrawOutputWrapper> for FinalizeWithdrawOutputTuple {
             dummy_4,
         } = result;
         (withdraw_amount, dummy_2, dummy_3, dummy_4)
-    }
-}
-
-pub fn load_token_account_and_balance<'info>(
-    remaining_accounts: &[AccountInfo<'info>],
-    account_index: usize,
-) -> TokenAccountAndBalance<'info> {
-    let token_account_info = &remaining_accounts[account_index];
-    let token_account = Account::<TokenAccount>::try_from(token_account_info).unwrap();
-    let balance_before = token_account.amount.clone();
-    return TokenAccountAndBalance {
-        token_accout: token_account,
-        balance_before: balance_before,
-    }; // (token_account.clone(), token_account.amount.clone());
-}
-
-pub struct TokenAccountAndBalance<'info> {
-    token_accout: Account<'info, TokenAccount>,
-    balance_before: u64,
-}
-impl<'info> TokenAccountAndBalance<'info> {
-    pub fn get_balance_change(&mut self) -> u64 {
-        self.token_accout.reload().unwrap();
-        let balance_before = self.balance_before;
-        let balance_after = self.token_accout.amount;
-        if balance_after > balance_before {
-            balance_after.checked_sub(balance_before).unwrap()
-        } else if balance_after == balance_before {
-            0_u64
-        } else {
-            balance_before.checked_sub(balance_after).unwrap()
-        }
     }
 }

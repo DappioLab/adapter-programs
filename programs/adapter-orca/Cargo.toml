@@ -1,5 +1,5 @@
 [package]
-name = "adapter-orca"
+name = "adapter_orca"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
@@ -16,4 +16,4 @@ cpi = ["no-entrypoint"]
 
 [dependencies]
 anchor-lang = "0.24.2"
-anchor-spl = "0.24.2"
+adapter-common = { path = "../../adapter_common",version= "0.1.0" }

@@ -355,13 +355,6 @@ export type AdapterKatana = {
         ]
       }
     }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedAction",
-      "msg": "Unsupported Action"
-    }
   ]
 };
 
@@ -721,13 +714,6 @@ export const IDL: AdapterKatana = {
           }
         ]
       }
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedAction",
-      "msg": "Unsupported Action"
     }
   ]
 };

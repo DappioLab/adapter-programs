@@ -17,6 +17,7 @@ cpi = ["no-entrypoint"]
 [dependencies]
 anchor-lang = "0.24.2"
 anchor-spl = "0.24.2"
+adapter-common = { path = "../../adapter_common",version= "0.1.0" }
 spl-associated-token-account = "1.0.3"
 hex = "0.4.3"
 tulip-arrform = "0.1.2"

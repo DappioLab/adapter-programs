@@ -252,18 +252,6 @@ export type AdapterTulip = {
         ]
       }
     }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedVaultProtocol",
-      "msg": "Unsupported Vault Protocol"
-    },
-    {
-      "code": 6001,
-      "name": "IndexOutOfBound",
-      "msg": "Index might out of bound, currently only support 30 addresses"
-    }
   ]
 };
 
@@ -520,18 +508,6 @@ export const IDL: AdapterTulip = {
           }
         ]
       }
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedVaultProtocol",
-      "msg": "Unsupported Vault Protocol"
-    },
-    {
-      "code": 6001,
-      "name": "IndexOutOfBound",
-      "msg": "Index might out of bound, currently only support 30 addresses"
     }
   ]
 };

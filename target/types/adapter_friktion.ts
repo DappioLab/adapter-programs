@@ -326,13 +326,6 @@ export type AdapterFriktion = {
         ]
       }
     }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedAction",
-      "msg": "Unsupported Action"
-    }
   ]
 };
 
@@ -663,13 +656,6 @@ export const IDL: AdapterFriktion = {
           }
         ]
       }
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "UnsupportedAction",
-      "msg": "Unsupported Action"
     }
   ]
 };
