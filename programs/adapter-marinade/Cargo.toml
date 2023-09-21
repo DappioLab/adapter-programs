@@ -1,0 +1,19 @@
+[package]
+name = "adapter-marinade"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "adapter_marinade"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+
+[dependencies]
+anchor-lang = "0.24.2"
+adapter-common = { path = "../../adapter_common",version= "0.1.0" }

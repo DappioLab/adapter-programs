@@ -10,6 +10,7 @@ adapter_katana = "ADPTwDKJTizC3V8gZXDxt5uLjJv4pBnh1nTTf9dZJnS2"
 adapter_tulip = "ADPT9nhC1asRcEB13FKymLTatqWGCuZHDznGgnakWKxW"
 adapter_friktion = "ADPTzbsaBdXA3FqXoPHjaTjPfh9kadxxFKxonZihP1Ji"
 adapter_nft_finance = "ADPTyBr92sBCE1hdYBRvXbMpF4hKs17xyDjFPxopcsrh"
+adapter_marinade = "3fUTvDPGzfRHpRkbZdTGzHzZHzBm1Km5cyAssfKZwTh3"
 
 [registry]
 url = "https://anchor.projectserum.com"
